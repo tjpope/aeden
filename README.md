@@ -3,9 +3,6 @@
    Program for calculating all-electron ground state density and energy in small atoms/molecules. We use the Extended Electron Fock matrix:                         
                                                                      
 <img src="https://latex.codecogs.com/svg.latex?\Large&space;F=\begin{pmatrix}H&-B\\B&H\end{pmatrix}" title="\Large x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}" />              
-         | H    -B |                                                 
-      F= |         | ,                                               
-         | B     H |                                                 
                                                                      
    where                                                             
       H = Kinetic + Nuclear + Coulomb                                
@@ -16,14 +13,14 @@
    - Thomas Pope and Werner Hofer. Spin in the extended electron model. Frontiers of Physics, 12(3):128503, 2017.                
    - Thomas Pope and Werner Hofer. An Extended Electron Approach to the General Many-Body Problem. arXiv preprint arXiv:1801.06242, 2018.                                                           
                                                                      
-                                                                     
-   The overlap, kinetic and nuclear integrals are generated using the recursive algorithms presented repsectively in:              
+-----------------------------------------------------------------------                                                                     
+   The overlap, kinetic and nuclear integrals are generated using the recursive algorithms presented respectively in:              
                                                                      
    - Minhhuy Ho and Julio Manuel Hernandex-Peresz. Evaluation of Gaussian Molecular Integrals I. Overlap Integrals. The Mathematica Journal, 14, 2012.                                  
    - Minhhuy Ho and Julio Manuel Hernandex-Peresz. Evaluation of Gaussian Molecular Integrals II. Kinetic Energy Integrals. The Mathematica Journal, 15, 2013.                                  
    - Minhhuy Ho and Julio Manuel Hernandex-Peresz. Evaluation of Gaussian Molecular Integrals III. Nuclear-Electron Attraction Integrals. The Mathematica Journal, 16, 2014.                   
                                                                      
-   The coulomb matrix is evaluated using the recursive algorithm presneted in:                                                    
+   The coulomb matrix is evaluated using the recursive algorithm presented in:                                                    
                                                                      
    - Shigeru Obara and A Saika. Efficient recursive computation of molecular integrals over Cartesian Gaussian functions. The Journal of chemical physics, 84(7):3963–3974, 1986.             
                                                                      
@@ -35,6 +32,7 @@
                                                                      
    - Warren J Hehre, Robert F Stewart, and John A Pople. self-consistent molecular-orbital methods. i. use of gaussian expansions of Slater-type atomic orbitals. The Journal of Chemical Physics, 51(6):2657–2664, 1969                         
                                                                      
+-----------------------------------------------------------------------                                                                     
                                                                      
    The LAPACK library is used - specifically, the routines:          
                                                                      
@@ -46,4 +44,3 @@
                                                                      
    - Edward Anderson, Zhaojun Bai, Christian Bischof, Susan Blackford, James Demmel, Jack Dongarra, Jeremy Du Croz, Anne Greenbaum, S Hammerling, Alan McKenney, et al. LAPACK Users' guide, volume 9. Siam, 1999.                                    
                                                                      
----------------------------------------------------------------------
