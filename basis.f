@@ -9,22 +9,56 @@
       type(maxbase) b
       integer::i,j,k
       double precision::con
-      con=(2/pi)**(3./4.) 
+      con=(2/pi)**(3./4.)
       k=0
       do i=1,nion
         do j=1,nint(zion(i))
-         if(j.eq.1.or.j.eq.2) then; no=1; else; no=2; endif
-         b=basisfunction(ng,no)
+         if(j.eq.1.or.j.eq.2)then
+          no=1
+          b=basisfunction(ng,no,0)
           sto%a(k+1:k+ng)=b%a(1:ng); sto%d(k+1:k+ng)=b%d(1:ng)
           sto%i(k+1:k+ng)=i; sto%c(k+1:k+ng,:)=b%c(1:ng,:)
           k=k+ng
+         elseif(j.eq.3.or.j.eq.4)then
+          no=2
+          b=basisfunction(ng,no,0)
+          sto%a(k+1:k+ng)=b%a(1:ng); sto%d(k+1:k+ng)=b%d(1:ng)
+          sto%i(k+1:k+ng)=i; sto%c(k+1:k+ng,:)=b%c(1:ng,:)
+          k=k+ng
+         elseif(j.eq.5.or.j.eq.6)then
+          no=3
+          b=basisfunction(ng,no,1)
+          sto%a(k+1:k+ng)=b%a(1:ng); sto%d(k+1:k+ng)=b%d(1:ng)
+          sto%i(k+1:k+ng)=i; sto%c(k+1:k+ng,:)=b%c(1:ng,:)
+          k=k+ng
+         elseif(j.eq.7.or.j.eq.8)then
+          no=3
+          b=basisfunction(ng,no,2)
+          sto%a(k+1:k+ng)=b%a(1:ng); sto%d(k+1:k+ng)=b%d(1:ng)
+          sto%i(k+1:k+ng)=i; sto%c(k+1:k+ng,:)=b%c(1:ng,:)
+          k=k+ng
+         elseif(j.eq.9.or.j.eq.10)then
+          no=3
+          b=basisfunction(ng,no,3)
+          sto%a(k+1:k+ng)=b%a(1:ng); sto%d(k+1:k+ng)=b%d(1:ng)
+          sto%i(k+1:k+ng)=i; sto%c(k+1:k+ng,:)=b%c(1:ng,:)
+          k=k+ng
+         endif
         enddo
       enddo
-      c(1:nb)=sto%d*con*sto%a**(3./4.)/(sqrt(2.)*ne)
-      c(n1:n2)=-c(1:nb)
+      if(allbase) then
+       c(1:nb)=sto%d/(sqrt(2.)*ne)
+       c(n1:n2)=-c(1:nb)
+      else
+       allocate(cfix(nb,n0)); cfix=0.d0
+       do i=1,ne; j=(i-1)*ng; k=j+ng; j=j+1
+        cfix(j:k,i)=sto%d(j:k)*rrt2/sqrt(dble(ne))
+       enddo
+       c=1.e-10; c(1)=1.; if(.not.hartfck)c(n1)=-1.
+      endif
       end subroutine initbase
 !---------------------------------------------------------------------!
-      function basisfunction(ng,no) result(sto)
+      function basisfunction(ng,no,na) result(sto)
 !---------------------------------------------------------------------!
 !                                                                     !
 !     Basis parameters taken from:                                    !
@@ -34,9 +68,10 @@
 !                                                                     !
 !---------------------------------------------------------------------!
       use mytypes
+      use rundata, only: pi
       implicit none
       type(maxbase) sto
-      integer::no,ng
+      integer::no,ng,na
       if(no.eq.1) then
        if(ng.eq.2) then
         sto%a(1)=.151623;  sto%d(1)=.851819;
@@ -65,6 +100,7 @@
         sto%a(6)=23.1030;  sto%d(6)=.00916360;
        endif
        sto%c=0
+       sto%d=sto%d*(2*sto%a/pi)**(3./4.)
       elseif(no.eq.2) then
        if(ng.eq.2) then
         sto%a(1)=.0974545; sto%d(1)=.963782;
@@ -93,6 +129,36 @@
         sto%a(6)=.103087;  sto%d(6)=-.0132528;
        endif
        sto%c=0
+       sto%d=sto%d*(2*sto%a/pi)**(3./4.)
+      elseif(no.eq.3) then
+       if(ng.eq.2) then
+        sto%a(1)=.0974545; sto%d(1)=.612820;
+        sto%a(2)=.384244;  sto%d(2)=.511541;
+       elseif(ng.eq.3) then
+        sto%a(1)=.0751386; sto%d(1)=.391957;
+        sto%a(2)=.231031;  sto%d(2)=.607684;
+        sto%a(3)=.994203;  sto%d(3)=.155916;
+       elseif(ng.eq.4) then
+        sto%a(1)=.0628104; sto%d(1)=.246313;
+        sto%a(2)=.163541;  sto%d(2)=.583575;
+        sto%a(3)=.502989;  sto%d(3)=.286379;
+        sto%a(4)=2.32350;  sto%d(4)=.0436843;
+       elseif(ng.eq.5) then
+        sto%a(1)=.0544949; sto%d(1)=.156828;
+        sto%a(2)=.127920;  sto%d(2)=.510240;
+        sto%a(3)=.329060;  sto%d(3)=.373598;
+        sto%a(4)=1.03250;  sto%d(4)=.107558;
+        sto%a(5)=5.03629;  sto%d(5)=.0125561;
+       elseif(ng.eq.6) then
+        sto%a(1)=.0485690; sto%d(1)=.101708;
+        sto%a(2)=.105960;  sto%d(2)=.425860;
+        sto%a(3)=.243977;  sto%d(3)=.418036;
+        sto%a(4)=.634142;  sto%d(4)=.173897;
+        sto%a(5)=2.04036;  sto%d(5)=.0376794;
+        sto%a(6)=.103087;  sto%d(6)=.0037597;
+       endif
+       sto%c=0; sto%c(:,na)=1
+       sto%d=sto%d*(128*sto%a**5/pi**3)**(1./4.)
       else
        stop"Invalid value for n_orbital"
       endif
@@ -114,31 +180,62 @@
       use functions, only: transform
       implicit none
       type(gauss) g1,g2,g3
-      integer::i,j 
-      double precision::d
-      do i=1,nb
-       g1%expo=sto%a(i)
-       g1%cent=ion(sto%i(i),:)
-       g1%cart=sto%c(i,:)
-       do j=1,nb
-        g2%expo=sto%a(j)
-        g2%cent=ion(sto%i(j),:)
-        g2%cart=sto%c(j,:)
-        g3%expo=g1%expo+g2%expo
-        g3%cent=(g1%expo*g1%cent+g2%expo*g2%cent)/g3%expo
-        g3%coef=exp(-g1%expo*g2%expo*sum((g1%cent-g2%cent)**2)/g3%expo)
-        smat(i,j)=sqrt(pi/g3%expo)**3*g3%coef*
+      integer::ie,je,id,jd,i,j 
+      double precision::sij
+      if(allbase) then
+       do i=1,n0
+        g1%expo=sto%a(i)
+        g1%cent=ion(sto%i(i),:)
+        g1%cart=sto%c(i,:)
+        do j=1,n0
+         g2%expo=sto%a(j)
+         g2%cent=ion(sto%i(j),:)
+         g2%cart=sto%c(j,:)
+         g3%expo=g1%expo+g2%expo
+         g3%cent=(g1%expo*g1%cent+g2%expo*g2%cent)/g3%expo
+         g3%coef=exp(-g1%expo*g2%expo*sum((g1%cent-g2%cent)**2)/g3%expo)
+         smat(i,j)=sqrt(pi/g3%expo)**3*g3%coef*
      .             olap(g1%cent(1),g1%cart(1),g1%expo,
      .                   g2%cent(1),g2%cart(1),g2%expo,g3%cent(1))*
      .               olap(g1%cent(2),g1%cart(2),g1%expo,
      .                     g2%cent(2),g2%cart(2),g2%expo,g3%cent(2))*
      .                 olap(g1%cent(3),g1%cart(3),g1%expo,
      .                       g2%cent(3),g2%cart(3),g2%expo,g3%cent(3))
+        enddo
        enddo
-      enddo
-      xmat(1:nb,1:nb)=smat; xmat(n1:n2,n1:n2)=xmat(1:nb,1:nb)
-      xmat(1:nb,n1:n2)=0.d0; xmat(n1:n2,1:nb)=0.d0
-      call transform(nb*2,xmat,nx)
+      else
+       smat=0.d0
+       do i=1,nb
+        g1%expo=sto%a(i)
+        g1%cent=ion(sto%i(i),:)
+        g1%cart=sto%c(i,:)
+        do j=1,nb
+         g2%expo=sto%a(j)
+         g2%cent=ion(sto%i(j),:)
+         g2%cart=sto%c(j,:)
+         g3%expo=g1%expo+g2%expo
+         g3%cent=(g1%expo*g1%cent+g2%expo*g2%cent)/g3%expo
+         g3%coef=exp(-g1%expo*g2%expo*sum((g1%cent-g2%cent)**2)/g3%expo)
+         sij=sqrt(pi/g3%expo)**3*g3%coef*
+     .             olap(g1%cent(1),g1%cart(1),g1%expo,
+     .                   g2%cent(1),g2%cart(1),g2%expo,g3%cent(1))*
+     .               olap(g1%cent(2),g1%cart(2),g1%expo,
+     .                     g2%cent(2),g2%cart(2),g2%expo,g3%cent(2))*
+     .                 olap(g1%cent(3),g1%cart(3),g1%expo,
+     .                       g2%cent(3),g2%cart(3),g2%expo,g3%cent(3))
+         do ie=1,n0; do je=1,n0
+          smat(ie,je)=smat(ie,je)+cfix(i,ie)*cfix(j,je)*sij
+         enddo; enddo
+        enddo
+       enddo
+      endif
+      if(hartfck)then
+       xmat=smat
+      else
+       xmat(1:n0,1:n0)=smat; xmat(n1:n2,n1:n2)=xmat(1:n0,1:n0)
+       xmat(1:n0,n1:n2)=0.d0; xmat(n1:n2,1:n0)=0.d0
+      endif
+      call transform(nh,xmat,nx)
       end subroutine smatrix
 !---------------------------------------------------------------------!
       recursive function olap(ba,la,ga,bb,lb,gb,bp) result(sx)
@@ -175,33 +272,64 @@
       use rundata
       implicit none
       type(gauss) g1,g2,g3
-      integer::i,j,k 
-      double precision::b,d
+      integer::ie,je,i,j,k 
+      double precision::b,d,kij
       double precision,dimension(3)::s
-      do i=1,nb
-       g1%expo=sto%a(i)
-       g1%cent=ion(sto%i(i),:)
-       g1%cart=sto%c(i,:)
-       do j=1,nb
-        g2%expo=sto%a(j)
-        g2%cent=ion(sto%i(j),:)
-        g2%cart=sto%c(j,:)
-        g3%expo=g1%expo+g2%expo
-        g3%cent=(g1%expo*g1%cent+g2%expo*g2%cent)/g3%expo
-        g3%coef=exp(-g1%expo*g2%expo*sum((g1%cent-g2%cent)**2)/g3%expo)
-        do k=1,3
-         s(k)=olap(g1%cent(k),g1%cart(k),g1%expo,
+      if(allbase) then
+       do i=1,nb
+        g1%expo=sto%a(i)
+        g1%cent=ion(sto%i(i),:)
+        g1%cart=sto%c(i,:)
+        do j=1,nb
+         g2%expo=sto%a(j)
+         g2%cent=ion(sto%i(j),:)
+         g2%cart=sto%c(j,:)
+         g3%expo=g1%expo+g2%expo
+         g3%cent=(g1%expo*g1%cent+g2%expo*g2%cent)/g3%expo
+         g3%coef=exp(-g1%expo*g2%expo*sum((g1%cent-g2%cent)**2)/g3%expo)
+         do k=1,3
+          s(k)=olap(g1%cent(k),g1%cart(k),g1%expo,
      .              g2%cent(k),g2%cart(k),g2%expo,g3%cent(k))
-        enddo
-        kmat(i,j)=2*g3%coef*sqrt(pi/g3%expo)**3*(
+         enddo
+         kmat(i,j)=2*g3%coef*sqrt(pi/g3%expo)**3*(
      .       krec(g1%cent(1),g1%cart(1),g1%expo,
      .             g2%cent(1),g2%cart(1),g2%expo,g3%cent(1))*s(2)*s(3)+
      .       krec(g1%cent(2),g1%cart(2),g1%expo,
      .             g2%cent(2),g2%cart(2),g2%expo,g3%cent(2))*s(1)*s(3)+
      .       krec(g1%cent(3),g1%cart(3),g1%expo,
      .             g2%cent(3),g2%cart(3),g2%expo,g3%cent(3))*s(1)*s(2))
+        enddo
        enddo
-      enddo
+      else
+       kmat=0.d0
+       do i=1,nb
+        g1%expo=sto%a(i)
+        g1%cent=ion(sto%i(i),:)
+        g1%cart=sto%c(i,:)
+        do j=1,nb
+         g2%expo=sto%a(j)
+         g2%cent=ion(sto%i(j),:)
+         g2%cart=sto%c(j,:)
+         g3%expo=g1%expo+g2%expo
+         g3%cent=(g1%expo*g1%cent+g2%expo*g2%cent)/g3%expo
+         g3%coef=exp(-g1%expo*g2%expo*sum((g1%cent-g2%cent)**2)/g3%expo)
+         do k=1,3
+          s(k)=olap(g1%cent(k),g1%cart(k),g1%expo,
+     .              g2%cent(k),g2%cart(k),g2%expo,g3%cent(k))
+         enddo
+         kij=2*g3%coef*sqrt(pi/g3%expo)**3*(
+     .       krec(g1%cent(1),g1%cart(1),g1%expo,
+     .             g2%cent(1),g2%cart(1),g2%expo,g3%cent(1))*s(2)*s(3)+
+     .       krec(g1%cent(2),g1%cart(2),g1%expo,
+     .             g2%cent(2),g2%cart(2),g2%expo,g3%cent(2))*s(1)*s(3)+
+     .       krec(g1%cent(3),g1%cart(3),g1%expo,
+     .             g2%cent(3),g2%cart(3),g2%expo,g3%cent(3))*s(1)*s(2))
+         do ie=1,n0; do je=1,n0
+          kmat(ie,je)=kmat(ie,je)+cfix(i,ie)*cfix(j,je)*kij
+         enddo; enddo
+        enddo
+       enddo
+      endif
       end subroutine kmatrix
 !---------------------------------------------------------------------!
       recursive function krec(ba,la,ga,bb,lb,gb,bp) result(kx)
@@ -248,26 +376,48 @@
       use functions, only: gauss_jacobi
       implicit none
       type(gauss) g1,g2,g3
-      integer::i,j,k
-      double precision::d,g12expo
+      integer::ie,je,i,j,k
+      double precision::d,g12expo,nij
       double precision,dimension(ngj)::pl
       call gauss_jacobi(-.5d0,-.5d0)
-      do i=1,nb
-       g1%expo=sto%a(i)
-       g1%cent=ion(sto%i(i),:)
-       g1%cart=sto%c(i,:)
-       do j=1,nb
-        g2%expo=sto%a(j)
-        g2%cent=ion(sto%i(j),:)
-        g2%cart=sto%c(j,:)
-        g12expo=1.d0/(g1%expo+g2%expo)
-        g3%cent=(g1%expo*g1%cent+g2%expo*g2%cent)*g12expo
-        g3%expo=g1%expo*g2%expo*g12expo
-        g3%coef=-exp(-g3%expo*sum((g1%cent-g2%cent)**2))
-        do k=1,ngj; pl(k)=npoly(g1,g2,xgj(k)); enddo
-        nmat(i,j)=g3%coef*2*pi*sum(wgj*pl)*g12expo
+      if(allbase) then
+       do i=1,nb
+        g1%expo=sto%a(i)
+        g1%cent=ion(sto%i(i),:)
+        g1%cart=sto%c(i,:)
+        do j=1,nb
+         g2%expo=sto%a(j)
+         g2%cent=ion(sto%i(j),:)
+         g2%cart=sto%c(j,:)
+         g12expo=1.d0/(g1%expo+g2%expo)
+         g3%cent=(g1%expo*g1%cent+g2%expo*g2%cent)*g12expo
+         g3%expo=g1%expo*g2%expo*g12expo
+         g3%coef=-exp(-g3%expo*sum((g1%cent-g2%cent)**2))
+         do k=1,ngj; pl(k)=npoly(g1,g2,xgj(k)); enddo
+         nmat(i,j)=g3%coef*2*pi*sum(wgj*pl)*g12expo
+        enddo
        enddo
-      enddo
+      else
+       do i=1,nb
+        g1%expo=sto%a(i)
+        g1%cent=ion(sto%i(i),:)
+        g1%cart=sto%c(i,:)
+        do j=1,nb
+         g2%expo=sto%a(j)
+         g2%cent=ion(sto%i(j),:)
+         g2%cart=sto%c(j,:)
+         g12expo=1.d0/(g1%expo+g2%expo)
+         g3%cent=(g1%expo*g1%cent+g2%expo*g2%cent)*g12expo
+         g3%expo=g1%expo*g2%expo*g12expo
+         g3%coef=-exp(-g3%expo*sum((g1%cent-g2%cent)**2))
+         do k=1,ngj; pl(k)=npoly(g1,g2,xgj(k)); enddo
+         nij=g3%coef*2*pi*sum(wgj*pl)*g12expo
+         do ie=1,n0; do je=1,n0
+          nmat(ie,je)=nmat(ie,je)+cfix(i,ie)*cfix(j,je)*nij
+         enddo; enddo
+        enddo
+       enddo
+      endif
       end subroutine nmatrix
 !---------------------------------------------------------------------!
       function npoly(g1,g2,t) result(np)
@@ -335,37 +485,66 @@
 !                                                                     !
 !---------------------------------------------------------------------!
       subroutine qmatrix
-      use rundata, only: nb,ion,sto,qmat
+      use rundata, only: n0,nb,ng,ion,sto,qmat,allbase,cfix
       use mytypes
       implicit none
       type(nrecval) pq
-      integer::ia,ib,ic,id,ie
-      ie=0
-      do ia=1,nb
-       pq%ga=sto%a(ia); pq%RA=ion(sto%i(ia),:); pq%a=sto%c(ia,:)
-       do ib=ia,nb
-        pq%gb=sto%a(ib); pq%RB=ion(sto%i(ib),:); pq%b=sto%c(ib,:)
-        pq%gp=pq%ga+pq%gb; pq%RP=(pq%ga*pq%RA+pq%gb*pq%RB)/pq%gp
-        do ic=1,nb
-         pq%gc=sto%a(ic); pq%RC=ion(sto%i(ic),:); pq%c=sto%c(ic,:)
-         do id=ic,nb
-          pq%gd=sto%a(id); pq%RD=ion(sto%i(id),:); pq%d=sto%c(id,:)
-          pq%gq=pq%gc+pq%gd; pq%RQ=(pq%gc*pq%RC+pq%gd*pq%RD)/pq%gq
-          pq%gw=pq%gp+pq%gq; pq%RW=(pq%gp*pq%RP+pq%gq*pq%RQ)/pq%gw
-          qmat(ia,ib,ic,id)=qrec(pq,0)
-          ie=ie+1
-          if(id.ne.ic) qmat(ia,ib,id,ic)=qmat(ia,ib,ic,id)
+      integer::ae,be,ce,de,ia,ib,ic,id
+      double precision::qabcd
+      if(allbase) then
+       do ia=1,n0
+        pq%ga=sto%a(ia); pq%RA=ion(sto%i(ia),:); pq%a=sto%c(ia,:)
+        do ib=ia,n0
+         pq%gb=sto%a(ib); pq%RB=ion(sto%i(ib),:); pq%b=sto%c(ib,:)
+         pq%gp=pq%ga+pq%gb; pq%RP=(pq%ga*pq%RA+pq%gb*pq%RB)/pq%gp
+         do ic=1,n0
+          pq%gc=sto%a(ic); pq%RC=ion(sto%i(ic),:); pq%c=sto%c(ic,:)
+          do id=ic,n0
+           pq%gd=sto%a(id); pq%RD=ion(sto%i(id),:); pq%d=sto%c(id,:)
+           pq%gq=pq%gc+pq%gd; pq%RQ=(pq%gc*pq%RC+pq%gd*pq%RD)/pq%gq
+           pq%gw=pq%gp+pq%gq; pq%RW=(pq%gp*pq%RP+pq%gq*pq%RQ)/pq%gw
+           qmat(ia,ib,ic,id)=qrec(pq,0)
+           if(id.ne.ic) qmat(ia,ib,id,ic)=qmat(ia,ib,ic,id)
+          enddo
+         enddo
+         if(ib.ne.ia) qmat(ib,ia,:,:)=qmat(ia,ib,:,:)
+        enddo
+       enddo
+      else
+       qmat=0.d0
+       do ia=1,nb
+        pq%ga=sto%a(ia); pq%RA=ion(sto%i(ia),:); pq%a=sto%c(ia,:)
+        do ib=ia,nb
+         pq%gb=sto%a(ib); pq%RB=ion(sto%i(ib),:); pq%b=sto%c(ib,:)
+         pq%gp=pq%ga+pq%gb; pq%RP=(pq%ga*pq%RA+pq%gb*pq%RB)/pq%gp
+         do ic=1,nb
+          pq%gc=sto%a(ic); pq%RC=ion(sto%i(ic),:); pq%c=sto%c(ic,:)
+          do id=ic,nb
+           pq%gd=sto%a(id); pq%RD=ion(sto%i(id),:); pq%d=sto%c(id,:)
+           pq%gq=pq%gc+pq%gd; pq%RQ=(pq%gc*pq%RC+pq%gd*pq%RD)/pq%gq
+           pq%gw=pq%gp+pq%gq; pq%RW=(pq%gp*pq%RP+pq%gq*pq%RQ)/pq%gw
+           qabcd=qrec(pq,0)
+           if(id.ne.ic.and.ib.ne.ia) then
+            do ae=1,n0; do be=1,n0; do ce=1,n0; do de=1,n0
+             qmat(ae,be,ce,de)=qmat(ae,be,ce,de)+4*cfix(ia,ae)*
+     .                        cfix(ib,be)*cfix(ic,ce)*cfix(id,de)*qabcd
+            enddo; enddo; enddo; enddo 
+           elseif(id.ne.ic.or.ib.ne.ia) then
+            do ae=1,n0; do be=1,n0; do ce=1,n0; do de=1,n0
+             qmat(ae,be,ce,de)=qmat(ae,be,ce,de)+2*cfix(ia,ae)*
+     .                        cfix(ib,be)*cfix(ic,ce)*cfix(id,de)*qabcd
+            enddo; enddo; enddo; enddo 
+           else
+            do ae=1,n0; do be=1,n0; do ce=1,n0; do de=1,n0
+             qmat(ae,be,ce,de)=qmat(ae,be,ce,de)+cfix(ia,ae)*
+     .                        cfix(ib,be)*cfix(ic,ce)*cfix(id,de)*qabcd
+            enddo; enddo; enddo; enddo
+           endif
+          enddo
          enddo
         enddo
-c        do ic=1,ia-1
-c         do id=1,ic-1
-c          qmat(ib,ia,ic,id)=qmat(ic,id,ia,ib)
-c         enddo 
-c        enddo
-        if(ib.ne.ia) qmat(ib,ia,:,:)=qmat(ia,ib,:,:)
        enddo
-      enddo
-      write(*,*) ie
+      endif
       end subroutine qmatrix
 !---------------------------------------------------------------------!
       recursive function qrec(pq,m) result(Q)
@@ -453,28 +632,48 @@ c        enddo
 !                                                                     !
 !---------------------------------------------------------------------!
       function plotbase(c) result(den)
-      use rundata, only: xmin,dx,ion,sto,n,nb
+      use rundata, only: xmin,dx,ion,sto,n,nh,n0,ng,allbase
       implicit none
-      integer::i,j,k,g
-      integer,dimension(nb,3)::phs
+      integer::i,j,k,g,a,ag
       double precision::absr,ang(3),amom
-      double precision,dimension(nb)::c
+      double precision,dimension(nh)::c
       double precision,dimension(n(1),n(2),n(3))::den
       double precision,dimension(3)::r,rH
       rH=0.
-      do i=1,n(1); r(1)=dx(1)*i+xmin
-       do j=1,n(2); r(2)=dx(2)*j+xmin
-        do k=1,n(3); r(3)=dx(3)*k+xmin
-         den(i,j,k)=0.
-         do g=1,nb
-          absr=sum((r-ion(sto%i(g),:))**2)
-          ang=(r-ion(sto%i(g),:))**(sto%c(g,:))
-          amom=ang(1)*ang(2)*ang(3)
-          den(i,j,k)=den(i,j,k)+(amom*c(g)*exp(-sto%a(g)*absr))**2
+      if(allbase)then
+       do i=1,n(1); r(1)=dx(1)*i+xmin
+        do j=1,n(2); r(2)=dx(2)*j+xmin
+         do k=1,n(3); r(3)=dx(3)*k+xmin
+          den(i,j,k)=0.
+          do g=1,n0
+           absr=sum((r-ion(sto%i(g),:))**2)
+           ang=(r-ion(sto%i(g),:))**(sto%c(g,:))
+           amom=ang(1)*ang(2)*ang(3)
+           den(i,j,k)=den(i,j,k)+(amom*c(g)*exp(-sto%a(g)*absr))**2
+          enddo
          enddo
         enddo
        enddo
-      enddo
+      else
+       do i=1,n(1); r(1)=dx(1)*i+xmin
+        do j=1,n(2); r(2)=dx(2)*j+xmin
+         do k=1,n(3); r(3)=dx(3)*k+xmin
+          den(i,j,k)=0.
+          ag=0
+          do a=1,n0
+           do g=1,ng
+            ag=ag+1
+            absr=sum((r-ion(sto%i(ag),:))**2)
+            ang=(r-ion(sto%i(ag),:))**(sto%c(ag,:))
+            amom=ang(1)*ang(2)*ang(3)
+            den(i,j,k)=den(i,j,k)+(amom*sto%d(ag)*exp(-sto%a(ag)*absr))**2
+           enddo
+           den(i,j,k)=den(i,j,k)*c(a)
+          enddo
+         enddo
+        enddo
+       enddo
+      endif
       end function plotbase
 !---------------------------------------------------------------------!
       end module basis

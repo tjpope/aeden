@@ -80,27 +80,32 @@
 !---------------------------------------------------------------------!
       program aeden
 !---------------------------------------------------------------------!
-      use rundata      !global variables
-      use io           !input/output routines
-      use basis        !basis set routines
-      use scf          !scf routines
+      use rundata       !global variables
+      use io            !input/output routines
+      use basis         !basis set routines
+      use scf           !scf routines
       implicit none
-      call moses       !get input from command line
-      call input       !get input from files
-      call allocations !allocate arrays
-      call initbase    !initialize the chosen basis set
-      write(*,*) "#    Calculating Basis Integrals"
-      call smatrix     !calculate overlap matrix
-      call kmatrix     !calculate kinetic matrix
-      call nmatrix     !calculate nuclear matrix
-      call qmatrix     !calculate coulomb matrix
-      write(*,*) "#    Basis Integrals Complete. Starting SCF"
-      call kohnsham    !perform scf cycle
-      write(*,*) "#    SCF Complete. Calculating Energy"
-      call energies    !calculate and output energies
-      if(verbose)then  !generate mass and spin densities on grid
-       call output("mass.dat",n(1),n(2),n(3),plotbase(c(1:nb)))
-       call output("spin.dat",n(1),n(2),n(3),plotbase(c(n1:n2)))
+      call moses        !get input from command line
+      call input        !get input from files
+      call allocations  !allocate arrays
+      call initbase     !initialize the chosen basis set
+      write(*,'("#    Calculating Basis Integrals")')
+      call smatrix      !calculate overlap matrix
+      call kmatrix      !calculate kinetic matrix
+      call nmatrix      !calculate nuclear matrix
+      call qmatrix      !calculate coulomb matrix
+      write(*,'("#    Basis Integrals Complete. Starting SCF")')
+      call kohnsham     !perform scf cycle
+      write(*,'("#    SCF Complete. Calculating Energy",/)')
+      call energies     !calculate and output energies
+      call output("coef.dat",nh,1,1,c)
+      if(verbose)then   !generate mass and spin densities on grid
+       if(hartfck)then 
+        call output("dens.dat",n(1),n(2),n(3),plotbase(c))
+       else
+        call output("mass.dat",n(1),n(2),n(3),plotbase(c(1:n0)))
+        call output("spin.dat",n(1),n(2),n(3),plotbase(c(n1:n2)))
+       endif
       endif
 !---------------------------------------------------------------------!
       end program aeden

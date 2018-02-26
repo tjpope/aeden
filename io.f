@@ -7,9 +7,9 @@
       implicit none
       integer::i
       character(100),allocatable,dimension(:)::comlin
-      ng=3; n=100; xmax=10.; xmin=-10.
+      ng=6; n=100; xmax=10.; xmin=-10.
       nion=-1; syslab=""; np=50; ngj=50;
-      verbose=.false.
+      verbose=.false.; allbase=.true.; hartfck=.false.
       allocate(comlin(command_argument_count()))
       do i=1,command_argument_count()
        call getarg(i,comlin(i))
@@ -23,13 +23,17 @@
         read(comlin(i+1),'(f10.5)') xmin
        elseif(index(comlin(i),'-lab').gt.0) then
         read(comlin(i+1),'(a)') syslab
+       elseif (index(comlin(i),'-cb').gt.0) then
+        allbase=.false.
+       elseif (index(comlin(i),'-hf').gt.0) then
+        hartfck=.true.
        elseif (index(comlin(i),'-v').gt.0) then
         verbose=.true.
        endif
       enddo
-      if(trim(syslab).eq."")stop'you need provide a system label'
-      if(ng.lt.2.or.ng.gt.6)stop'try again. unsupported basis'
-      if(maxval(n).gt.1000)stop'stop being a cock! n is too big'
+      if(trim(syslab).eq."")stop'being a cock! you need provide a system label'
+      if(ng.lt.2.or.ng.gt.6)stop'being a cock! unsupported basis'
+      if(maxval(n).gt.1000)stop'being a cock! n is too big'
       dx=(xmax-xmin)/n
       write(*,100)ng,xmin,xmax,n
 100   format("#",4x,"Using the STO-",i1,"G Basis Set.",/,
@@ -45,7 +49,10 @@
       integer::i
       character(100)::fname
       character(3)::atom
+      logical::ex
       write(fname,'(a,".xyz")') trim(syslab)
+      inquire(file=fname,exist=ex)
+      if(.not.ex)stop'being a cock! input file not there'
       open(60,file=fname)
       read(60,*) nion
       read(60,*)
@@ -55,8 +62,11 @@
        zion(i)=atomcharge(atom)       
       enddo
       close(60)
-      ne=sum(zion); nb=ne*ng; n1=nb+1; n2=nb*2
-      if(nb>91)stop'System too big for this Q matrix'
+      ne=sum(zion); nb=ne*ng;
+      if(allbase)then; n0=nb; else; n0=ne; endif
+      n1=n0+1; n2=n0*2
+      if(hartfck)then; nh=n0; else; nh=n2; endif
+      if(ne>91)stop'being a cock! System too big for this Q matrix'
       end subroutine input
 !---------------------------------------------------------------------!
       function atomcharge(atom) result(chrg)
@@ -82,50 +92,74 @@
       end function atomcharge
 !---------------------------------------------------------------------!
       subroutine energies
-      use rundata, only: nb,smat,kmat,nmat,qmat,c,mu
+      use rundata, only: smat,kmat,nmat,qmat,c,mu,hartfck
       implicit none
-      integer::i,j
       double precision::pop(3),etot
-      pop(1:2)=pops(c)
-      pop(3)=sum(pop(1:2))
-      write(*,100)pop
+      pop(1:2)=pops(c); pop(3)=sum(pop(1:2))
+      if(hartfck)then
+       write(*,100)pop(1)
+      else
+       write(*,200)pop
+      endif
       call finalenergy(kmat,nmat,qmat,c)
-100   format("#",4x,"Mass Population  =",f10.5,/,
+100   format("#",4x,"Population       =",f10.5,/)
+200   format("#",4x,"Mass Population  =",f10.5,/,
      .       "#",4x,"Spin Population  =",f10.5,/,
      .       "#",4x,"Total Population =",f10.5,/)
       end subroutine energies
 !---------------------------------------------------------------------!
       function pops(c) result(pop)
-      use rundata, only: nb,smat
+      use rundata, only: n0,n1,n2,nh,smat,hartfck
       implicit none
       integer::i
       double precision,dimension(2)::pop
-      double precision,dimension(nb*2)::c,b
-      double precision,dimension(nb)::m,s
-      double precision,dimension(nb,nb)::p
+      double precision,dimension(nh)::c
+      double precision,dimension(n0)::m,s
+      double precision,dimension(n0,n0)::p
       intent(in)c
-      m=c(1:nb); s=c(nb+1:nb*2)
-      do i=1,nb; p(i,:)=m(i)*m; enddo; pop(1)=sum(p*smat)
-      do i=1,nb; p(i,:)=s(i)*s; enddo; pop(2)=sum(p*smat)
+      m=c(1:n0); do i=1,n0; p(i,:)=m(i)*m; enddo; pop(1)=sum(p*smat)
+      if(.not.hartfck)then
+       s=c(n1:n2); do i=1,n0; p(i,:)=s(i)*s; enddo; pop(2)=sum(p*smat)
+      endif
       end function pops
 !---------------------------------------------------------------------!      
       subroutine finalenergy(T,V,Q,c)
       use scf, only: coulomb,fullden,ionrep
-      use rundata, only: etot,ry2ev,n1,n2,nb
+      use rundata, only: etot,ry2ev,n0,n1,n2,nh,hartfck
       implicit none
       double precision::EK,EN,EH,Eion
-      double precision,dimension(n2)::c
-      double precision,dimension(nb,nb)::T,V,VH,RHO
-      double precision,dimension(nb,nb,nb,nb)::Q
-      double precision,dimension(n2,n2)::F,P
-      P=fullden(c,nb); RHO=P(n1:n2,n1:n2)+P(1:nb,1:nb); F=0.d0
-      VH=coulomb(RHO,Q); 
-      F(1:nb,1:nb)=VH; F(n1:n2,n1:n2)=F(1:nb,1:nb); EH=sum(P*F)*ry2ev
-      F(1:nb,1:nb)=2*T; F(n1:n2,n1:n2)=F(1:nb,1:nb); EK=sum(P*F)*ry2ev
-      F(1:nb,1:nb)=2*V; F(n1:n2,n1:n2)=F(1:nb,1:nb); EN=sum(P*F)*ry2ev
+      double precision,dimension(nh)::c
+      double precision,dimension(n0,n0)::T,V,VH,RHO
+      double precision,dimension(n0,n0,n0,n0)::Q
+      double precision,dimension(nh,nh)::F,P
+      P=fullden(c); 
+      if(hartfck)then
+       RHO=P(1:n0,1:n0)
+      else
+       RHO=P(n1:n2,n1:n2)+P(1:n0,1:n0); 
+      endif
+      F=0.d0; VH=coulomb(RHO,Q);
+      if(hartfck)then
+       F(1:n0,1:n0)=VH; EH=sum(P*F)*ry2ev
+       F(1:n0,1:n0)=2*T; EK=sum(P*F)*ry2ev
+       F(1:n0,1:n0)=2*V; EN=sum(P*F)*ry2ev
+      else
+       F(1:n0,1:n0)=VH; F(n1:n2,n1:n2)=F(1:n0,1:n0); EH=sum(P*F)*ry2ev
+       F(1:n0,1:n0)=2*T; F(n1:n2,n1:n2)=F(1:n0,1:n0); EK=sum(P*F)*ry2ev
+       F(1:n0,1:n0)=2*V; F(n1:n2,n1:n2)=F(1:n0,1:n0); EN=sum(P*F)*ry2ev
+      endif
       Etot=Etot*ry2ev; Eion=ionrep()*ry2ev
-      write(*,100)EN,EK,EH,etot-(EN+EH+EK+Eion),Eion,etot
-100   format("#",4x,"Nuclear Energy = ",f20.5,/,
+      if(hartfck)then
+       write(*,100)EN,EK,EH,Eion,etot
+      else
+       write(*,200)EN,EK,EH,etot-(EN+EH+EK+Eion),Eion,etot
+      endif
+100   format("#",4x,"Nuclear Energy          = ",f20.5,/,
+     .       "#",4x,"Kinetic Energy          = ",f20.5,/,
+     .       "#",4x,"Coulomb+Exchange Energy = ",f20.5,/,
+     .       "#",4x,"Ion Repulsion           = ",f20.5,/,/,
+     .       "#",4x,"Total Energy            = ",f20.5,/)
+200   format("#",4x,"Nuclear Energy = ",f20.5,/,
      .       "#",4x,"Kinetic Energy = ",f20.5,/,
      .       "#",4x,"Coulomb Energy = ",f20.5,/,
      .       "#",4x,"Bivector Term  = ",f20.5,/,
@@ -168,6 +202,21 @@
       endif
       close(60)
       end subroutine output
+!---------------------------------------------------------------------!
+      subroutine outmat(fname,n1,n2,dat)
+      implicit none
+      integer::n1,n2,i,j
+      double precision,intent(in),dimension(n1,n2)::dat
+      character(*)::fname 
+      character(20)::frmt
+      intent(in)n1,n2,fname
+      write(frmt,'("(",i0,"f7.2)")') n2
+      open(60,file=fname)
+      do i=1,n1
+       write(60,frmt) (dat(i,j),j=1,n2)
+      enddo
+      close(60)
+      end subroutine outmat
 !---------------------------------------------------------------------!
       end module io
 !---------------------------------------------------------------------!

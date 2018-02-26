@@ -1,15 +1,13 @@
-# Makefile for aeden. T.Pope, 2017
+# Makefile for aeden. T.Pope, 2018
 FC          = gfortran 
 FLAGS_DEBUG = -g
 FLAGS_OPT   = -O3
 FLAGS_FORM  = -ffixed-line-length-none 
-FLAGS_OMP   = 
-#-fopenmp
 LAPACK      = /usr/lib/liblapack.so.3
 BLAS        = /usr/lib/libblas.so.3 -fexternal-blas
 LIBRARY     = $(BLAS) $(LAPACK) 
 
-FLAGS       = $(FLAGS_DEBUG) $(FLAGS_OPT) $(FLAGS_OMP) $(FLAGS_FORM) 
+FLAGS       = $(FLAGS_DEBUG) $(FLAGS_OPT) $(FLAGS_FORM) 
 
 .f.o:
 	$(FC) -c $(FLAGS) $<

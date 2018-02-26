@@ -16,10 +16,6 @@
        double precision::expo,coef
        double precision,dimension(3)::cent
       end type gauss
-      type nuke
-      integer::la,lb
-      double precision::ba,ga,bb,gb,bp,br
-      end type nuke
       type nrecval
       integer,dimension(3)::a,b,c,d
       double precision::ga,gb,gc,gd,gp,gq,gw
@@ -34,12 +30,12 @@
 !---------------------------------------------------------------------!
 !     input                                                           !
 !---------------------------------------------------------------------!
-      integer::ng,n(3),nion,nb,ne,np,n1,n2
+      integer::ng,n(3),nion,nb,ne,np,n0,n1,n2,nh
       double precision::xmin,xmax,dx(3)
       double precision,allocatable,dimension(:)::zion,slat
       double precision,allocatable,dimension(:,:)::ion
       character(100)::syslab
-      logical::verbose
+      logical::verbose,allbase,hartfck
 !---------------------------------------------------------------------!
 !     gauss-jacobi                                                    !
 !---------------------------------------------------------------------!
@@ -52,6 +48,7 @@
       integer::nx,no
       double precision,allocatable,dimension(:)::c
       double precision,allocatable,dimension(:,:)::smat,kmat,nmat,xmat
+      double precision,allocatable,dimension(:,:)::cfix
       double precision,allocatable,dimension(:,:,:,:)::qmat
 !---------------------------------------------------------------------!
 !     output                                                          !
@@ -61,14 +58,13 @@
 !---------------------------------------------------------------------!
 !       simple constants                                              !
 !---------------------------------------------------------------------!
-       double precision::zero,pi,rt2,pi52
-       parameter(zero=1e-25,pi=3.1415926535897932385,rt2=0.707107,
-     .                            pi52=17.49341833)
+       double precision::zero,pi,rrt2
+       parameter(zero=1e-25,pi=3.1415926535897932385,rrt2=0.707107)
 !---------------------------------------------------------------------!
-!       composite constants for F- and T-matrices                     !
+!       composite constants                                           !
 !---------------------------------------------------------------------!
-       double precision::hcon,pi2on6
-       parameter(hcon=1.128379167,pi2on6=1.644934067)
+       double precision::hcon,pi2on6,pi52
+       parameter(hcon=1.128379167,pi2on6=1.644934067,pi52=17.49341833)
 !---------------------------------------------------------------------!
 !       exchange corraltion parameters                                !
 !---------------------------------------------------------------------!
@@ -91,11 +87,11 @@
        allocate(sden(n(1),n(2),n(3)))!spin density matrix
       endif
       allocate(sto%a(nb),sto%d(nb),sto%i(nb),sto%c(nb,3))!basis set
-      allocate(smat(nb,nb),xmat(n2,n2))!gaussian overlap matrix 
-      allocate(kmat(nb,nb))!gaussian kinetic matrix 
-      allocate(nmat(nb,nb))!gaussian nuclear matrix 
-      allocate(qmat(nb,nb,nb,nb))!Q matrix - BE VERY CAREFUL!!!!! 
-      allocate(c(n2))!coefficients for density
+      allocate(smat(n0,n0),xmat(nh,nh))!gaussian overlap matrix 
+      allocate(kmat(n0,n0))!gaussian kinetic matrix 
+      allocate(nmat(n0,n0))!gaussian nuclear matrix 
+      allocate(qmat(n0,n0,n0,n0))!Q matrix - BE VERY CAREFUL!!!!! 
+      allocate(c(nh))!coefficients for density
       allocate(xgj(ngj),wgj(ngj))
       end subroutine allocations
 !---------------------------------------------------------------------!
