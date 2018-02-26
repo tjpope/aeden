@@ -2,6 +2,7 @@
                                                                      
    Program for calculating all-electron ground state density and energy in small atoms/molecules. We use the Extended Electron Fock matrix:                         
                                                                      
+<img src="https://latex.codecogs.com/svg.latex?\Large&space;F=\begin{pmatrix}H&-B\\B&H\end{pmatrix}" title="\Large x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}" />              
          | H    -B |                                                 
       F= |         | ,                                               
          | B     H |                                                 
