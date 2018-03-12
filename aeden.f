@@ -89,14 +89,14 @@
       call input        !get input from files
       call allocations  !allocate arrays
       call initbase     !initialize the chosen basis set
-      write(*,'("#    Calculating Basis Integrals")')
+      write(*,'("#    Calculating Basis Integrals",t63,"#")')
       call smatrix      !calculate overlap matrix
       call kmatrix      !calculate kinetic matrix
       call nmatrix      !calculate nuclear matrix
       call qmatrix      !calculate coulomb matrix
-      write(*,'("#    Basis Integrals Complete. Starting SCF")')
+      write(*,'("#    Basis Integrals Complete. Starting SCF",t63,"#")')
       call kohnsham     !perform scf cycle
-      write(*,'("#    SCF Complete. Calculating Energy",/)')
+      write(*,'("#    SCF Complete. Calculating Energy",t63,"#",/"#",t63,"#")')
       call energies     !calculate and output energies
       call output("coef.dat",nh,1,1,c)
       if(verbose)then   !generate mass and spin densities on grid

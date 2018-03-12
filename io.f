@@ -29,18 +29,41 @@
         hartfck=.true.
        elseif (index(comlin(i),'-v').gt.0) then
         verbose=.true.
+       elseif (index(comlin(i),'--help').gt.0) then
+        write(*,100); write(*,200); stop
        endif
       enddo
       if(trim(syslab).eq."")stop'being a cock! you need provide a system label'
       if(ng.lt.2.or.ng.gt.6)stop'being a cock! unsupported basis'
       if(maxval(n).gt.1000)stop'being a cock! n is too big'
       dx=(xmax-xmin)/n
-      write(*,100)ng,xmin,xmax,n
-100   format("#",4x,"Using the STO-",i1,"G Basis Set.",/,
-     .       "#",4x,"Cell Dimensions:",/,
-     .       "#",5x,"xmax = ",f10.5,/,
-     .       "#",5x,"xmin = ",f10.5,/,
-     .       "#",5x,"n = ",3(i0,2x),/)
+      write(*,100)
+      write(*,300)ng,xmin,xmax,n
+100   format("###############################################################",/,"#",t63,"#",/,
+     .       "#       AA       EEEEEEEE   DDDDDDDD     EEEEEEEE  NN    NN   #",/,
+     .       "#      AAAA      EE         DD      DD   EE        NNN   NN   #",/,
+     .       "#     AA  AA     EE         DD      DD   EE        NNNN  NN   #",/,
+     .       "#    AA    AA    EEEEEEEE   DD      DD   EEEEEEEE  NN NN NN   #",/,
+     .       "#   AAAAAAAAAA   EE         DD      DD   EE        NN  NNNN   #",/,
+     .       "#   AA      AA   EE         DD      DD   EE        NN   NNN   #",/,
+     .       "#   AA      AA   EEEEEEEE   DDDDDDDD     EEEEEEEE  NN    NN   #",/,"#",t63,"#",/,
+     .       "###############################################################")
+200   format("#",t63,"#",/,"#",4x,"Usage:",t63,"#",/,"#",t63,"#",/,
+     .       "#",4x,"./aeden.x -lab XXXX {options}",t63,"#",/,"#",t63,"#",/,
+     .       "#",4x,"Essential Input",t63,"#",/,
+     .       "#",4x,"-lab XXXX",t20,"Input label - XXXX.xyz must exist",t63,"#",/,
+     .       "#",t63,"#",/,"#",4x,"Optional Input",t63,"#",/,
+     .       "#",4x,"-hf",t20,"Run Hartree-Fock instead of Extended",
+     .       t63,"#",/,"#",t20,"Electrons",t63,"#",/,
+     .       "#",4x,"-cb",t20,"Contract Basis before SCF cycle",t63,"#",/,
+     .       "#",4x,"-ng XX",t20,"Number of gaussian in STO-nG basis - XX",
+     .       t63,"#",/,"#",t20,"must be an integer",t63,"#",/,"#",t63,"#",/,
+     .       "###############################################################")
+300   format("#",t63,"#",/,"#",4x,"Using the STO-",i1,"G Basis Set.",t63,"#",/,
+     .       "#",4x,"Cell Dimensions:",t63,"#",/,
+     .       "#",5x,"xmax = ",f10.5,t63,"#",/,
+     .       "#",5x,"xmin = ",f10.5,t63,"#",/,
+     .       "#",5x,"n = ",3(i0,2x),t63,"#",/,"#",t63,"#")
       end subroutine moses
 !---------------------------------------------------------------------!
       subroutine input
@@ -102,10 +125,10 @@
        write(*,200)pop
       endif
       call finalenergy(kmat,nmat,qmat,c)
-100   format("#",4x,"Population       =",f10.5,/)
-200   format("#",4x,"Mass Population  =",f10.5,/,
-     .       "#",4x,"Spin Population  =",f10.5,/,
-     .       "#",4x,"Total Population =",f10.5,/)
+100   format("#",4x,"Population       =",f10.5,t63,"#",/)
+200   format("#",4x,"Mass Population  =",f10.5,t63,"#",/,
+     .       "#",4x,"Spin Population  =",f10.5,t63,"#",/,
+     .       "#",4x,"Total Population =",f10.5,t63,"#",/,"#",t63,"#")
       end subroutine energies
 !---------------------------------------------------------------------!
       function pops(c) result(pop)
@@ -125,7 +148,7 @@
 !---------------------------------------------------------------------!      
       subroutine finalenergy(T,V,Q,c)
       use scf, only: coulomb,fullden,ionrep
-      use rundata, only: etot,ry2ev,n0,n1,n2,nh,hartfck
+      use rundata, only: etot,ry2ev,n0,n1,n2,nh,ne,hartfck
       implicit none
       double precision::EK,EN,EH,Eion
       double precision,dimension(nh)::c
@@ -140,31 +163,33 @@
       endif
       F=0.d0; VH=coulomb(RHO,Q);
       if(hartfck)then
-       F(1:n0,1:n0)=VH; EH=sum(P*F)*ry2ev
-       F(1:n0,1:n0)=2*T; EK=sum(P*F)*ry2ev
-       F(1:n0,1:n0)=2*V; EN=sum(P*F)*ry2ev
+       F(1:n0,1:n0)=VH; EH=sum(P*F)*ry2ev/ne
+       F(1:n0,1:n0)=2*T; EK=sum(P*F)*ry2ev/ne
+       F(1:n0,1:n0)=2*V; EN=sum(P*F)*ry2ev/ne
       else
-       F(1:n0,1:n0)=VH; F(n1:n2,n1:n2)=F(1:n0,1:n0); EH=sum(P*F)*ry2ev
-       F(1:n0,1:n0)=2*T; F(n1:n2,n1:n2)=F(1:n0,1:n0); EK=sum(P*F)*ry2ev
-       F(1:n0,1:n0)=2*V; F(n1:n2,n1:n2)=F(1:n0,1:n0); EN=sum(P*F)*ry2ev
+       F(1:n0,1:n0)=VH; F(n1:n2,n1:n2)=F(1:n0,1:n0); EH=sum(P*F)*ry2ev/ne
+       F(1:n0,1:n0)=2*T; F(n1:n2,n1:n2)=F(1:n0,1:n0); EK=sum(P*F)*ry2ev/ne
+       F(1:n0,1:n0)=2*V; F(n1:n2,n1:n2)=F(1:n0,1:n0); EN=sum(P*F)*ry2ev/ne
       endif
-      Etot=Etot*ry2ev; Eion=ionrep()*ry2ev
+      Etot=Etot*ry2ev/sqrt(dble(ne))**2; Eion=ionrep()*ry2ev
       if(hartfck)then
        write(*,100)EN,EK,EH,Eion,etot
       else
        write(*,200)EN,EK,EH,etot-(EN+EH+EK+Eion),Eion,etot
       endif
-100   format("#",4x,"Nuclear Energy          = ",f20.5,/,
-     .       "#",4x,"Kinetic Energy          = ",f20.5,/,
-     .       "#",4x,"Coulomb+Exchange Energy = ",f20.5,/,
-     .       "#",4x,"Ion Repulsion           = ",f20.5,/,/,
-     .       "#",4x,"Total Energy            = ",f20.5,/)
-200   format("#",4x,"Nuclear Energy = ",f20.5,/,
-     .       "#",4x,"Kinetic Energy = ",f20.5,/,
-     .       "#",4x,"Coulomb Energy = ",f20.5,/,
-     .       "#",4x,"Bivector Term  = ",f20.5,/,
-     .       "#",4x,"Ion Repulsion  = ",f20.5,/,/,
-     .       "#",4x,"Total Energy   = ",f20.5,/)
+100   format("#",4x,"Nuclear Energy          = ",f20.5,t63,"#",/,
+     .       "#",4x,"Kinetic Energy          = ",f20.5,t63,"#",/,
+     .       "#",4x,"Coulomb+Exchange Energy = ",f20.5,t63,"#",/,
+     .       "#",4x,"Ion Repulsion           = ",f20.5,t63,"#",/,"#",t63,"#",/,
+     .       "#",4x,"Total Energy            = ",f20.5,t63,"#",/,"#",t63,"#",/,
+     .       "###############################################################")
+200   format("#",4x,"Nuclear Energy = ",f20.5,t63,"#",/,
+     .       "#",4x,"Kinetic Energy = ",f20.5,t63,"#",/,
+     .       "#",4x,"Coulomb Energy = ",f20.5,t63,"#",/,
+     .       "#",4x,"Bivector Term  = ",f20.5,t63,"#",/,
+     .       "#",4x,"Ion Repulsion  = ",f20.5,t63,"#",/,"#",t63,"#",/,
+     .       "#",4x,"Total Energy   = ",f20.5,t63,"#",/,"#",t63,"#",/,
+     .       "###############################################################")
       end subroutine finalenergy
 !---------------------------------------------------------------------!  
       subroutine output(fname,n1,n2,n3,dat,g)
