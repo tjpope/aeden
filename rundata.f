@@ -30,12 +30,12 @@
 !---------------------------------------------------------------------!
 !     input                                                           !
 !---------------------------------------------------------------------!
-      integer::ng,n(3),nion,nb,ne,np,n0,n1,n2,nh
+      integer::ng,n(3),nion,nb,ne,np,n0,n1,n2,nh,nani,iani,uout
       double precision::xmin,xmax,dx(3)
-      double precision,allocatable,dimension(:)::zion,slat
-      double precision,allocatable,dimension(:,:)::ion
+      double precision,allocatable,dimension(:)::zion
+      double precision,allocatable,dimension(:,:,:)::ion
       character(100)::syslab
-      logical::verbose,allbase,hartfck
+      logical::verbose,allbase,hartfck,animate,quiet,extout
 !---------------------------------------------------------------------!
 !     gauss-jacobi                                                    !
 !---------------------------------------------------------------------!
@@ -46,6 +46,8 @@
 !---------------------------------------------------------------------!
       type(base) sto
       integer::nx,no
+      real,dimension(6)::cputime
+      real,dimension(5)::anitime
       double precision,allocatable,dimension(:)::c
       double precision,allocatable,dimension(:,:)::smat,kmat,nmat,xmat
       double precision,allocatable,dimension(:,:)::cfix

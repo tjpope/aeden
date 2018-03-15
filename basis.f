@@ -182,14 +182,15 @@
       type(gauss) g1,g2,g3
       integer::ie,je,id,jd,i,j 
       double precision::sij
+      call cpu_time(cputime(1))
       if(allbase) then
        do i=1,n0
         g1%expo=sto%a(i)
-        g1%cent=ion(sto%i(i),:)
+        g1%cent=ion(sto%i(i),:,iani)
         g1%cart=sto%c(i,:)
         do j=1,n0
          g2%expo=sto%a(j)
-         g2%cent=ion(sto%i(j),:)
+         g2%cent=ion(sto%i(j),:,iani)
          g2%cart=sto%c(j,:)
          g3%expo=g1%expo+g2%expo
          g3%cent=(g1%expo*g1%cent+g2%expo*g2%cent)/g3%expo
@@ -207,11 +208,11 @@
        smat=0.d0
        do i=1,nb
         g1%expo=sto%a(i)
-        g1%cent=ion(sto%i(i),:)
+        g1%cent=ion(sto%i(i),:,iani)
         g1%cart=sto%c(i,:)
         do j=1,nb
          g2%expo=sto%a(j)
-         g2%cent=ion(sto%i(j),:)
+         g2%cent=ion(sto%i(j),:,iani)
          g2%cart=sto%c(j,:)
          g3%expo=g1%expo+g2%expo
          g3%cent=(g1%expo*g1%cent+g2%expo*g2%cent)/g3%expo
@@ -275,14 +276,15 @@
       integer::ie,je,i,j,k 
       double precision::b,d,kij
       double precision,dimension(3)::s
+      call cpu_time(cputime(2))
       if(allbase) then
        do i=1,nb
         g1%expo=sto%a(i)
-        g1%cent=ion(sto%i(i),:)
+        g1%cent=ion(sto%i(i),:,iani)
         g1%cart=sto%c(i,:)
         do j=1,nb
          g2%expo=sto%a(j)
-         g2%cent=ion(sto%i(j),:)
+         g2%cent=ion(sto%i(j),:,iani)
          g2%cart=sto%c(j,:)
          g3%expo=g1%expo+g2%expo
          g3%cent=(g1%expo*g1%cent+g2%expo*g2%cent)/g3%expo
@@ -304,11 +306,11 @@
        kmat=0.d0
        do i=1,nb
         g1%expo=sto%a(i)
-        g1%cent=ion(sto%i(i),:)
+        g1%cent=ion(sto%i(i),:,iani)
         g1%cart=sto%c(i,:)
         do j=1,nb
          g2%expo=sto%a(j)
-         g2%cent=ion(sto%i(j),:)
+         g2%cent=ion(sto%i(j),:,iani)
          g2%cart=sto%c(j,:)
          g3%expo=g1%expo+g2%expo
          g3%cent=(g1%expo*g1%cent+g2%expo*g2%cent)/g3%expo
@@ -379,15 +381,16 @@
       integer::ie,je,i,j,k
       double precision::d,g12expo,nij
       double precision,dimension(ngj)::pl
+      call cpu_time(cputime(3))
       call gauss_jacobi(-.5d0,-.5d0)
       if(allbase) then
        do i=1,nb
         g1%expo=sto%a(i)
-        g1%cent=ion(sto%i(i),:)
+        g1%cent=ion(sto%i(i),:,iani)
         g1%cart=sto%c(i,:)
         do j=1,nb
          g2%expo=sto%a(j)
-         g2%cent=ion(sto%i(j),:)
+         g2%cent=ion(sto%i(j),:,iani)
          g2%cart=sto%c(j,:)
          g12expo=1.d0/(g1%expo+g2%expo)
          g3%cent=(g1%expo*g1%cent+g2%expo*g2%cent)*g12expo
@@ -400,11 +403,11 @@
       else
        do i=1,nb
         g1%expo=sto%a(i)
-        g1%cent=ion(sto%i(i),:)
+        g1%cent=ion(sto%i(i),:,iani)
         g1%cart=sto%c(i,:)
         do j=1,nb
          g2%expo=sto%a(j)
-         g2%cent=ion(sto%i(j),:)
+         g2%cent=ion(sto%i(j),:,iani)
          g2%cart=sto%c(j,:)
          g12expo=1.d0/(g1%expo+g2%expo)
          g3%cent=(g1%expo*g1%cent+g2%expo*g2%cent)*g12expo
@@ -422,7 +425,7 @@
 !---------------------------------------------------------------------!
       function npoly(g1,g2,t) result(np)
       use mytypes
-      use rundata, only:ion,nion,zion,pi
+      use rundata, only:ion,nion,zion,iani,pi
       implicit none
       type(gauss) g1,g2
       integer::i
@@ -432,7 +435,7 @@
       bp=(g1%expo*g1%cent+g2%expo*g2%cent)/p
       np=0
       do i=1,nion
-       br=ion(i,:)
+       br=ion(i,:,iani)
        nx=nrec(t,g1%cent(1),g1%cart(1),g1%expo,
      .            g2%cent(1),g2%cart(1),g2%expo,bp(1),br(1))
        ny=nrec(t,g1%cent(2),g1%cart(2),g1%expo,
@@ -485,22 +488,23 @@
 !                                                                     !
 !---------------------------------------------------------------------!
       subroutine qmatrix
-      use rundata, only: n0,nb,ng,ion,sto,qmat,allbase,cfix
+      use rundata, only: n0,nb,ng,ion,sto,qmat,allbase,cfix,iani,cputime
       use mytypes
       implicit none
       type(nrecval) pq
       integer::ae,be,ce,de,ia,ib,ic,id
       double precision::qabcd
+      call cpu_time(cputime(4))
       if(allbase) then
        do ia=1,n0
-        pq%ga=sto%a(ia); pq%RA=ion(sto%i(ia),:); pq%a=sto%c(ia,:)
+        pq%ga=sto%a(ia); pq%RA=ion(sto%i(ia),:,iani); pq%a=sto%c(ia,:)
         do ib=ia,n0
-         pq%gb=sto%a(ib); pq%RB=ion(sto%i(ib),:); pq%b=sto%c(ib,:)
+         pq%gb=sto%a(ib); pq%RB=ion(sto%i(ib),:,iani); pq%b=sto%c(ib,:)
          pq%gp=pq%ga+pq%gb; pq%RP=(pq%ga*pq%RA+pq%gb*pq%RB)/pq%gp
          do ic=1,n0
-          pq%gc=sto%a(ic); pq%RC=ion(sto%i(ic),:); pq%c=sto%c(ic,:)
+          pq%gc=sto%a(ic); pq%RC=ion(sto%i(ic),:,iani); pq%c=sto%c(ic,:)
           do id=ic,n0
-           pq%gd=sto%a(id); pq%RD=ion(sto%i(id),:); pq%d=sto%c(id,:)
+           pq%gd=sto%a(id); pq%RD=ion(sto%i(id),:,iani); pq%d=sto%c(id,:)
            pq%gq=pq%gc+pq%gd; pq%RQ=(pq%gc*pq%RC+pq%gd*pq%RD)/pq%gq
            pq%gw=pq%gp+pq%gq; pq%RW=(pq%gp*pq%RP+pq%gq*pq%RQ)/pq%gw
            qmat(ia,ib,ic,id)=qrec(pq,0)
@@ -513,14 +517,14 @@
       else
        qmat=0.d0
        do ia=1,nb
-        pq%ga=sto%a(ia); pq%RA=ion(sto%i(ia),:); pq%a=sto%c(ia,:)
+        pq%ga=sto%a(ia); pq%RA=ion(sto%i(ia),:,iani); pq%a=sto%c(ia,:)
         do ib=ia,nb
-         pq%gb=sto%a(ib); pq%RB=ion(sto%i(ib),:); pq%b=sto%c(ib,:)
+         pq%gb=sto%a(ib); pq%RB=ion(sto%i(ib),:,iani); pq%b=sto%c(ib,:)
          pq%gp=pq%ga+pq%gb; pq%RP=(pq%ga*pq%RA+pq%gb*pq%RB)/pq%gp
          do ic=1,nb
-          pq%gc=sto%a(ic); pq%RC=ion(sto%i(ic),:); pq%c=sto%c(ic,:)
+          pq%gc=sto%a(ic); pq%RC=ion(sto%i(ic),:,iani); pq%c=sto%c(ic,:)
           do id=ic,nb
-           pq%gd=sto%a(id); pq%RD=ion(sto%i(id),:); pq%d=sto%c(id,:)
+           pq%gd=sto%a(id); pq%RD=ion(sto%i(id),:,iani); pq%d=sto%c(id,:)
            pq%gq=pq%gc+pq%gd; pq%RQ=(pq%gc*pq%RC+pq%gd*pq%RD)/pq%gq
            pq%gw=pq%gp+pq%gq; pq%RW=(pq%gp*pq%RP+pq%gq*pq%RQ)/pq%gw
            qabcd=qrec(pq,0)
@@ -632,7 +636,7 @@
 !                                                                     !
 !---------------------------------------------------------------------!
       function plotbase(c) result(den)
-      use rundata, only: xmin,dx,ion,sto,n,nh,n0,ng,allbase
+      use rundata, only: xmin,dx,ion,sto,n,nh,n0,ng,allbase,iani
       implicit none
       integer::i,j,k,g,a,ag
       double precision::absr,ang(3),amom
@@ -646,8 +650,8 @@
          do k=1,n(3); r(3)=dx(3)*k+xmin
           den(i,j,k)=0.
           do g=1,n0
-           absr=sum((r-ion(sto%i(g),:))**2)
-           ang=(r-ion(sto%i(g),:))**(sto%c(g,:))
+           absr=sum((r-ion(sto%i(g),:,iani))**2)
+           ang=(r-ion(sto%i(g),:,iani))**(sto%c(g,:))
            amom=ang(1)*ang(2)*ang(3)
            den(i,j,k)=den(i,j,k)+(amom*c(g)*exp(-sto%a(g)*absr))**2
           enddo
@@ -663,8 +667,8 @@
           do a=1,n0
            do g=1,ng
             ag=ag+1
-            absr=sum((r-ion(sto%i(ag),:))**2)
-            ang=(r-ion(sto%i(ag),:))**(sto%c(ag,:))
+            absr=sum((r-ion(sto%i(ag),:,iani))**2)
+            ang=(r-ion(sto%i(ag),:,iani))**(sto%c(ag,:))
             amom=ang(1)*ang(2)*ang(3)
             den(i,j,k)=den(i,j,k)+(amom*sto%d(ag)*exp(-sto%a(ag)*absr))**2
            enddo

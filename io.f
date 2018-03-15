@@ -7,9 +7,27 @@
       implicit none
       integer::i
       character(100),allocatable,dimension(:)::comlin
+      character(72),dimension(11)::title
+      character(8),dimension(7)::biga,bige,bigd,bign
+      biga=(/ "   AA   ","  AAAA  "," AA  AA ","AA    AA",
+     .                 "AAAAAAAA","AA    AA","AA    AA"/)
+      bige=(/ "EEEEEEEE","EE      ","EE      ","EEEEEEEE",
+     .                 "EE      ","EE      ","EEEEEEEE"/)
+      bigd=(/ "DDDDDDD ","DD    DD","DD    DD","DD    DD",
+     .                 "DD    DD","DD    DD","DDDDDDD "/)
+      bign=(/ "NN    NN","NNN   NN","NNNN  NN","NN NN NN",
+     .                 "NN  NNNN","NN   NNN","NN    NN"/)
+      write(title(1),'(63("#"))'); write(title(2),'("#",t63,"#")')      
+      title(11)=title(1); title(10)=title(2)
+      do i=1,7
+       write(title(i+2),'("#      ",5(a8,"  "),t63,"#")') 
+     .                        biga(i),bige(i),bigd(i),bige(i),bign(i)
+      enddo
+      do i=1,11; write(*,'(63a)') title(i); enddo
       ng=6; n=100; xmax=10.; xmin=-10.
       nion=-1; syslab=""; np=50; ngj=50;
-      verbose=.false.; allbase=.true.; hartfck=.false.
+      verbose=.false.; allbase=.true.; hartfck=.false.; animate=.false.
+      quiet=.false.; uout=6
       allocate(comlin(command_argument_count()))
       do i=1,command_argument_count()
        call getarg(i,comlin(i))
@@ -23,6 +41,10 @@
         read(comlin(i+1),'(f10.5)') xmin
        elseif(index(comlin(i),'-lab').gt.0) then
         read(comlin(i+1),'(a)') syslab
+       elseif(index(comlin(i),'-ani').gt.0) then
+        animate=.true.
+       elseif(index(comlin(i),'-q').gt.0) then
+        quiet=.true.
        elseif (index(comlin(i),'-cb').gt.0) then
         allbase=.false.
        elseif (index(comlin(i),'-hf').gt.0) then
@@ -30,24 +52,20 @@
        elseif (index(comlin(i),'-v').gt.0) then
         verbose=.true.
        elseif (index(comlin(i),'--help').gt.0) then
-        write(*,100); write(*,200); stop
+        write(*,200); stop
        endif
       enddo
       if(trim(syslab).eq."")stop'being a cock! you need provide a system label'
       if(ng.lt.2.or.ng.gt.6)stop'being a cock! unsupported basis'
       if(maxval(n).gt.1000)stop'being a cock! n is too big'
+      if(animate.and.quiet) then
+       uout=65
+       do i=1,11; write(uout,'(63a)') title(i); enddo
+       write(65,300)ng,xmin,xmax,n
+       anitime=0.
+      endif
       dx=(xmax-xmin)/n
-      write(*,100)
       write(*,300)ng,xmin,xmax,n
-100   format("###############################################################",/,"#",t63,"#",/,
-     .       "#       AA       EEEEEEEE   DDDDDDDD     EEEEEEEE  NN    NN   #",/,
-     .       "#      AAAA      EE         DD      DD   EE        NNN   NN   #",/,
-     .       "#     AA  AA     EE         DD      DD   EE        NNNN  NN   #",/,
-     .       "#    AA    AA    EEEEEEEE   DD      DD   EEEEEEEE  NN NN NN   #",/,
-     .       "#   AAAAAAAAAA   EE         DD      DD   EE        NN  NNNN   #",/,
-     .       "#   AA      AA   EE         DD      DD   EE        NN   NNN   #",/,
-     .       "#   AA      AA   EEEEEEEE   DDDDDDDD     EEEEEEEE  NN    NN   #",/,"#",t63,"#",/,
-     .       "###############################################################")
 200   format("#",t63,"#",/,"#",4x,"Usage:",t63,"#",/,"#",t63,"#",/,
      .       "#",4x,"./aeden.x -lab XXXX {options}",t63,"#",/,"#",t63,"#",/,
      .       "#",4x,"Essential Input",t63,"#",/,
@@ -56,35 +74,64 @@
      .       "#",4x,"-hf",t20,"Run Hartree-Fock instead of Extended",
      .       t63,"#",/,"#",t20,"Electrons",t63,"#",/,
      .       "#",4x,"-cb",t20,"Contract Basis before SCF cycle",t63,"#",/,
+     .       "#",4x,"-ani",t20,"Run on .ani instead of .xyz",t63,"#",/,
+     .       "#",4x,"-q",t20,"Be quiet",t63,"#",/,
      .       "#",4x,"-ng XX",t20,"Number of gaussian in STO-nG basis - XX",
      .       t63,"#",/,"#",t20,"must be an integer",t63,"#",/,"#",t63,"#",/,
-     .       "###############################################################")
+     .       63("#"))
 300   format("#",t63,"#",/,"#",4x,"Using the STO-",i1,"G Basis Set.",t63,"#",/,
      .       "#",4x,"Cell Dimensions:",t63,"#",/,
      .       "#",5x,"xmax = ",f10.5,t63,"#",/,
      .       "#",5x,"xmin = ",f10.5,t63,"#",/,
-     .       "#",5x,"n = ",3(i0,2x),t63,"#",/,"#",t63,"#")
+     .       "#",5x,"n = ",3(i0,2x),t63,"#",/,"#",t63,"#",/,63("#"))
       end subroutine moses
 !---------------------------------------------------------------------!
       subroutine input
       use rundata
       implicit none
-      integer::i
+      integer::i,j,ios
       character(100)::fname
       character(3)::atom
+      double precision,dimension(3)::dummy
       logical::ex
-      write(fname,'(a,".xyz")') trim(syslab)
-      inquire(file=fname,exist=ex)
-      if(.not.ex)stop'being a cock! input file not there'
-      open(60,file=fname)
-      read(60,*) nion
-      read(60,*)
-      allocate(ion(nion,3),zion(nion),slat(nion))
-      do i=1,nion
-       read(60,*)atom,ion(i,:)
-       zion(i)=atomcharge(atom)       
-      enddo
-      close(60)
+      if(animate) then
+       write(fname,'(a,".ani")') trim(syslab)
+       inquire(file=fname,exist=ex)
+       if(.not.ex)stop'being a cock! input file not there'
+       open(60,file=fname)
+       read(60,*) nion
+       read(60,*); do i=1,nion; read(60,*)atom,dummy; enddo; nani=1; ios=0
+       do while(ios.eq.0) 
+        read(60,*,iostat=ios) j
+        if(j.ne.nion)stop'must have constant number of atoms in ani'
+        if(ios.eq.0) then
+         read(60,*); do i=1,nion; read(60,*)atom,dummy; enddo; nani=nani+1
+        endif
+       enddo
+       allocate(ion(nion,3,nani),zion(nion))
+       rewind(60)
+       read(60,*) nion; read(60,*)
+       do i=1,nion
+        read(60,*)atom,ion(i,:,j); zion(i)=atomcharge(atom)
+       enddo
+       do j=2,nani
+        read(60,*) nion; read(60,*)
+        do i=1,nion; read(60,*)atom,ion(i,:,j); enddo
+       enddo       
+      else
+       nani=1
+       write(fname,'(a,".xyz")') trim(syslab)
+       inquire(file=fname,exist=ex)
+       if(.not.ex)stop'being a cock! input file not there'
+       open(60,file=fname)
+       read(60,*) nion
+       read(60,*)
+       allocate(ion(nion,3,1),zion(nion))
+       do i=1,nion
+        read(60,*)atom,ion(i,:,1); zion(i)=atomcharge(atom)
+       enddo
+       close(60)
+      endif
       ne=sum(zion); nb=ne*ng;
       if(allbase)then; n0=nb; else; n0=ne; endif
       n1=n0+1; n2=n0*2
@@ -115,20 +162,37 @@
       end function atomcharge
 !---------------------------------------------------------------------!
       subroutine energies
-      use rundata, only: smat,kmat,nmat,qmat,c,mu,hartfck
+      use rundata, only: smat,kmat,nmat,qmat,c,mu,hartfck,
+     .                           animate,iani,uout,cputime,anitime
       implicit none
+      integer::i
       double precision::pop(3),etot
+      call cpu_time(cputime(6))
+      do i=1,5; cputime(i)=cputime(i+1)-cputime(i); enddo
+      if(animate)anitime=anitime+cputime(1:5)
       pop(1:2)=pops(c); pop(3)=sum(pop(1:2))
+      if(animate) write(uout,300)iani
       if(hartfck)then
-       write(*,100)pop(1)
+       write(uout,100)pop(1)
       else
-       write(*,200)pop
+       write(uout,200)pop
       endif
       call finalenergy(kmat,nmat,qmat,c)
-100   format("#",4x,"Population       =",f10.5,t63,"#",/)
-200   format("#",4x,"Mass Population  =",f10.5,t63,"#",/,
-     .       "#",4x,"Spin Population  =",f10.5,t63,"#",/,
+      if(.not.animate)write(uout,400)cputime(1:5)
+100   format("#",t63,"#",/,"#",t63,"#",/,
+     .         "#",4x,"Population       =",f10.5,t63,"#",/,"#",t63,"#")
+200   format("#",t63,"#",/,"#",4x,"Mass Population  =",f10.5,t63,
+     .       "#",/,"#",4x,"Spin Population  =",f10.5,t63,"#",/,
      .       "#",4x,"Total Population =",f10.5,t63,"#",/,"#",t63,"#")
+300   format("#",t63,"#",/,"#",t6,"Step Number ",i0,t63,"#")
+400   format(63("#"),/,"#",t63,"#",/,"#",t6,"CPU Times:",t63,"#",/,
+     .       "#"t63,"#",/,
+     .  "#",t6,"Overlap Matrix: ",t26,f20.13,t46," seconds",t63,"#",/,
+     .  "#",t6,"Kinetic Matrix: ",t26,f20.13,t46," seconds",t63,"#",/,
+     .  "#",t6,"Nuclear Matrix: ",t26,f20.13,t46," seconds",t63,"#",/,
+     .  "#",t6,"Coulomb Matrix: ",t26,f20.13,t46," seconds",t63,"#",/,
+     .  "#",t6,"SCF: ",t26,f20.13,t46," seconds",t63,"#",/,
+     .  "#"t63,"#",/,63("#"))
       end subroutine energies
 !---------------------------------------------------------------------!
       function pops(c) result(pop)
@@ -148,14 +212,15 @@
 !---------------------------------------------------------------------!      
       subroutine finalenergy(T,V,Q,c)
       use scf, only: coulomb,fullden,ionrep
-      use rundata, only: etot,ry2ev,n0,n1,n2,nh,ne,hartfck
+      use rundata, only: etot,ry2ev,n0,n1,n2,nh,ne,hartfck,animate,
+     .                                                        iani,uout
       implicit none
-      double precision::EK,EN,EH,Eion
+      double precision::EK,EN,EH,Eion,conv
       double precision,dimension(nh)::c
       double precision,dimension(n0,n0)::T,V,VH,RHO
       double precision,dimension(n0,n0,n0,n0)::Q
       double precision,dimension(nh,nh)::F,P
-      P=fullden(c); 
+      P=fullden(c); conv=ry2ev/ne
       if(hartfck)then
        RHO=P(1:n0,1:n0)
       else
@@ -163,33 +228,33 @@
       endif
       F=0.d0; VH=coulomb(RHO,Q);
       if(hartfck)then
-       F(1:n0,1:n0)=VH; EH=sum(P*F)*ry2ev/ne
-       F(1:n0,1:n0)=2*T; EK=sum(P*F)*ry2ev/ne
-       F(1:n0,1:n0)=2*V; EN=sum(P*F)*ry2ev/ne
+       F(1:n0,1:n0)=VH; EH=sum(P*F)*conv
+       F(1:n0,1:n0)=T; EK=sum(P*F)*conv
+       F(1:n0,1:n0)=V; EN=sum(P*F)*conv
       else
-       F(1:n0,1:n0)=VH; F(n1:n2,n1:n2)=F(1:n0,1:n0); EH=sum(P*F)*ry2ev/ne
-       F(1:n0,1:n0)=2*T; F(n1:n2,n1:n2)=F(1:n0,1:n0); EK=sum(P*F)*ry2ev/ne
-       F(1:n0,1:n0)=2*V; F(n1:n2,n1:n2)=F(1:n0,1:n0); EN=sum(P*F)*ry2ev/ne
+       F(1:n0,1:n0)=VH; F(n1:n2,n1:n2)=F(1:n0,1:n0); EH=sum(P*F)*conv
+       F(1:n0,1:n0)=T; F(n1:n2,n1:n2)=F(1:n0,1:n0); EK=sum(P*F)*conv
+       F(1:n0,1:n0)=V; F(n1:n2,n1:n2)=F(1:n0,1:n0); EN=sum(P*F)*conv
       endif
-      Etot=Etot*ry2ev/sqrt(dble(ne))**2; Eion=ionrep()*ry2ev
+      Etot=Etot*ry2ev; Eion=ionrep()*ry2ev
       if(hartfck)then
-       write(*,100)EN,EK,EH,Eion,etot
+       write(uout,100)EN,EK,EH,Eion,etot
       else
-       write(*,200)EN,EK,EH,etot-(EN+EH+EK+Eion),Eion,etot
+       write(uout,200)EN,EK,EH,etot-(EN+EH+EK+Eion),Eion,etot
       endif
+      if(animate) write(uout,300)iani,Etot,EK,EN,EH
 100   format("#",4x,"Nuclear Energy          = ",f20.5,t63,"#",/,
      .       "#",4x,"Kinetic Energy          = ",f20.5,t63,"#",/,
      .       "#",4x,"Coulomb+Exchange Energy = ",f20.5,t63,"#",/,
      .       "#",4x,"Ion Repulsion           = ",f20.5,t63,"#",/,"#",t63,"#",/,
-     .       "#",4x,"Total Energy            = ",f20.5,t63,"#",/,"#",t63,"#",/,
-     .       "###############################################################")
+     .       "#",4x,"Total Energy            = ",f20.5,t63,"#",/,"#",t63,"#")
 200   format("#",4x,"Nuclear Energy = ",f20.5,t63,"#",/,
      .       "#",4x,"Kinetic Energy = ",f20.5,t63,"#",/,
      .       "#",4x,"Coulomb Energy = ",f20.5,t63,"#",/,
      .       "#",4x,"Bivector Term  = ",f20.5,t63,"#",/,
      .       "#",4x,"Ion Repulsion  = ",f20.5,t63,"#",/,"#",t63,"#",/,
-     .       "#",4x,"Total Energy   = ",f20.5,t63,"#",/,"#",t63,"#",/,
-     .       "###############################################################")
+     .       "#",4x,"Total Energy   = ",f20.5,t63,"#",/,"#",t63,"#")
+300   format(t2,i5,t8,4(es17.10,1x),/,"#",t63,"#")
       end subroutine finalenergy
 !---------------------------------------------------------------------!  
       subroutine output(fname,n1,n2,n3,dat,g)

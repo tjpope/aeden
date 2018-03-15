@@ -85,19 +85,34 @@
       use basis         !basis set routines
       use scf           !scf routines
       implicit none
+      double precision::steps,cutoff,cut
       call moses        !get input from command line
       call input        !get input from files
       call allocations  !allocate arrays
       call initbase     !initialize the chosen basis set
-      write(*,'("#    Calculating Basis Integrals",t63,"#")')
-      call smatrix      !calculate overlap matrix
-      call kmatrix      !calculate kinetic matrix
-      call nmatrix      !calculate nuclear matrix
-      call qmatrix      !calculate coulomb matrix
-      write(*,'("#    Basis Integrals Complete. Starting SCF",t63,"#")')
-      call kohnsham     !perform scf cycle
-      write(*,'("#    SCF Complete. Calculating Energy",t63,"#",/"#",t63,"#")')
-      call energies     !calculate and output energies
+      if(animate) then
+       cutoff=nani/63.0; write(*,100) nani; steps=1; cut=cutoff
+      endif
+      if(uout.ne.6)open(uout,file="output.aeden")
+      do iani=1,nani
+       if(uout.ne.6) then
+        steps=steps+1; if(steps.ge.cut) then
+         call system("echo -n '#'"); cut=cut+cutoff
+        endif
+       endif
+       call smatrix      !calculate overlap matrix
+       call kmatrix      !calculate kinetic matrix
+       call nmatrix      !calculate nuclear matrix
+       call qmatrix      !calculate coulomb matrix
+       call kohnsham     !perform scf cycle
+       call energies     !calculate and output energies
+      enddo
+      if(uout.ne.6)then
+       close(65)
+       write(*,200); write(*,300)anitime
+      elseif(animate)then
+       write(*,300)anitime
+      endif
       call output("coef.dat",nh,1,1,c)
       if(verbose)then   !generate mass and spin densities on grid
        if(hartfck)then 
@@ -107,6 +122,26 @@
         call output("spin.dat",n(1),n(2),n(3),plotbase(c(n1:n2)))
        endif
       endif
+100   format("#",t63,"#",/,"#",t6,"Running on ",i0," Geometries",
+     .       t63,"#",/,"#",t63,"#")
+200   format(/,"#",t63,"#",/,"#",t6,
+     .       "The rest of the ouput is in output.aeden",t63,"#",/,
+     .       "#",t63,"#")
+300   format(63("#"),/,"#",t63,"#",/,"#",t6,
+     .       "Overall CPU Times:",t63,"#",/,"#"t63,"#",/,
+     .  "#",t6,"Overlap Matrix: ",t26,f10.3,t36," seconds",t63,"#",/,
+     .  "#",t6,"Kinetic Matrix: ",t26,f10.3,t36," seconds",t63,"#",/,
+     .  "#",t6,"Nuclear Matrix: ",t26,f10.3,t36," seconds",t63,"#",/,
+     .  "#",t6,"Coulomb Matrix: ",t26,f10.3,t36," seconds",t63,"#",/,
+     .  "#",t6,"SCF: ",t26,f10.3,t36," seconds",t63,"#",/,
+     .  "#"t63,"#",/,63("#"))
 !---------------------------------------------------------------------!
       end program aeden
 !---------------------------------------------------------------------!
+
+
+
+
+
+
+
