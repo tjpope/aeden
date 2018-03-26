@@ -83,6 +83,7 @@
       use rundata       !global variables
       use io            !input/output routines
       use basis         !basis set routines
+      use renew_basis   !basis renewal routines
       use scf           !scf routines
       implicit none
       double precision::steps,cutoff,cut
@@ -90,28 +91,34 @@
       call input        !get input from files
       call allocations  !allocate arrays
       call initbase     !initialize the chosen basis set
+      if(animate)write(*,100)nani; iani=1
+      call smatrix      !calculate overlap matrix
+c      call output("smat.dat",n0,n0,1,smat)
+      call kmatrix      !calculate kinetic matrix
+      call nmatrix      !calculate nuclear matrix
+      call qmatrix      !calculate coulomb matrix
+      call kohnsham     !perform scf cycle
+      call energies     !calculate and output energies
       if(animate) then
-       cutoff=nani/63.0; write(*,100) nani; steps=1; cut=cutoff
-      endif
-      if(uout.ne.6)open(uout,file="output.aeden")
-      do iani=1,nani
-       if(uout.ne.6) then
-        steps=steps+1; if(steps.ge.cut) then
-         call system("echo -n '#'"); cut=cut+cutoff
+       cutoff=nani/63.0; steps=2; cut=cutoff
+       do iani=2,nani
+        if(uout.ne.6) then
+         steps=steps+1; if(steps.ge.cut) then
+          call system("echo -n '#'"); cut=cut+cutoff
+         endif
         endif
+        call renew_smatrix !calculate overlap matrix again
+        call renew_kmatrix !calculate kinetic matrix again
+        call renew_nmatrix !calculate nuclear matrix again
+        call qmatrix       !calculate coulomb matrix again
+        call kohnsham      !perform scf cycle
+        call energies      !calculate and output energies
+       enddo
+       if(uout.ne.6)then
+        close(65); write(*,200); write(*,300)anitime
+       else
+        write(*,300)anitime
        endif
-       call smatrix      !calculate overlap matrix
-       call kmatrix      !calculate kinetic matrix
-       call nmatrix      !calculate nuclear matrix
-       call qmatrix      !calculate coulomb matrix
-       call kohnsham     !perform scf cycle
-       call energies     !calculate and output energies
-      enddo
-      if(uout.ne.6)then
-       close(65)
-       write(*,200); write(*,300)anitime
-      elseif(animate)then
-       write(*,300)anitime
       endif
       call output("coef.dat",nh,1,1,c)
       if(verbose)then   !generate mass and spin densities on grid

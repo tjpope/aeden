@@ -188,7 +188,7 @@
         g1%expo=sto%a(i)
         g1%cent=ion(sto%i(i),:,iani)
         g1%cart=sto%c(i,:)
-        do j=1,n0
+        do j=i,n0
          g2%expo=sto%a(j)
          g2%cent=ion(sto%i(j),:,iani)
          g2%cart=sto%c(j,:)
@@ -202,6 +202,7 @@
      .                     g2%cent(2),g2%cart(2),g2%expo,g3%cent(2))*
      .                 olap(g1%cent(3),g1%cart(3),g1%expo,
      .                       g2%cent(3),g2%cart(3),g2%expo,g3%cent(3))
+         if(i.ne.j)smat(j,i)=smat(i,j)
         enddo
        enddo
       else
@@ -282,7 +283,7 @@
         g1%expo=sto%a(i)
         g1%cent=ion(sto%i(i),:,iani)
         g1%cart=sto%c(i,:)
-        do j=1,nb
+        do j=i,nb
          g2%expo=sto%a(j)
          g2%cent=ion(sto%i(j),:,iani)
          g2%cart=sto%c(j,:)
@@ -300,6 +301,7 @@
      .             g2%cent(2),g2%cart(2),g2%expo,g3%cent(2))*s(1)*s(3)+
      .       krec(g1%cent(3),g1%cart(3),g1%expo,
      .             g2%cent(3),g2%cart(3),g2%expo,g3%cent(3))*s(1)*s(2))
+         if(i.ne.j)kmat(j,i)=kmat(i,j)
         enddo
        enddo
       else
@@ -388,7 +390,7 @@
         g1%expo=sto%a(i)
         g1%cent=ion(sto%i(i),:,iani)
         g1%cart=sto%c(i,:)
-        do j=1,nb
+        do j=i,nb
          g2%expo=sto%a(j)
          g2%cent=ion(sto%i(j),:,iani)
          g2%cart=sto%c(j,:)
@@ -398,6 +400,7 @@
          g3%coef=-exp(-g3%expo*sum((g1%cent-g2%cent)**2))
          do k=1,ngj; pl(k)=npoly(g1,g2,xgj(k)); enddo
          nmat(i,j)=g3%coef*2*pi*sum(wgj*pl)*g12expo
+         if(i.ne.j)nmat(j,i)=nmat(i,j)
         enddo
        enddo
       else
@@ -569,7 +572,7 @@
           Eab=exp(-pq%ga*pq%gb*sum((pq%RA-pq%RB)**2)/pq%gp)
           Ecd=exp(-pq%gc*pq%gd*sum((pq%RC-pq%RD)**2)/pq%gq)
           do i=1,ngj; pl(i)=qpoly(m,T,xgj(i)); enddo
-          Q=2*pi52*Eab*Ecd*sum(wgj*pl)/(pq%gp*pq%gq*sqrt(pq%gw))
+          Q=2.*pi52*Eab*Ecd*sum(wgj*pl)/(pq%gp*pq%gq*sqrt(pq%gw))
          else!                                                    all-a
           do i=1,3; if(pq%a(i).gt.0) j=i; enddo
           m1=pq; m1%a(j)=m1%a(j)-1

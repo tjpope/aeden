@@ -22,14 +22,14 @@ c      do i=1,n; c(i)=sum(v(i,1:ne)); enddo; c=c/sqrt(dble(ne))
 !---------------------------------------------------------------------!      
       subroutine kohnsham
       use rundata, only: n0,n1,n2,nh,ne,smat,kmat,nmat,qmat,c,
-     .                                                 mu,etot,hartfck,cputime
+     .                               mu,etot,hartfck,cputime,tol
       implicit none
       integer::i,j,k,l,cnt
       double precision::eold,enew,enuc,converge,mix
       double precision,dimension(n0,n0)::H0,S,RHO
       double precision,dimension(nh,nh)::H,P
       call cpu_time(cputime(5))
-      converge=1e-8
+      converge=tol
       H0=kmat+nmat; S=smat; enuc=ionrep()
       P=fullden(c)
       if(hartfck) then

@@ -31,7 +31,7 @@
 !     input                                                           !
 !---------------------------------------------------------------------!
       integer::ng,n(3),nion,nb,ne,np,n0,n1,n2,nh,nani,iani,uout
-      double precision::xmin,xmax,dx(3)
+      double precision::xmin,xmax,dx(3),tol
       double precision,allocatable,dimension(:)::zion
       double precision,allocatable,dimension(:,:,:)::ion
       character(100)::syslab

@@ -7,7 +7,7 @@
       implicit none
       integer::i
       character(100),allocatable,dimension(:)::comlin
-      character(72),dimension(11)::title
+      character(77),dimension(11)::title
       character(8),dimension(7)::biga,bige,bigd,bign
       biga=(/ "   AA   ","  AAAA  "," AA  AA ","AA    AA",
      .                 "AAAAAAAA","AA    AA","AA    AA"/)
@@ -19,19 +19,16 @@
      .                 "NN  NNNN","NN   NNN","NN    NN"/)
       write(title(1),'(63("#"))'); write(title(2),'("#",t63,"#")')      
       title(11)=title(1); title(10)=title(2)
-      do i=1,7
-       write(title(i+2),'("#      ",5(a8,"  "),t63,"#")') 
-     .                        biga(i),bige(i),bigd(i),bige(i),bign(i)
+      do i=1,7; 
+       write(title(i+2),1001)biga(i),bige(i),bigd(i),bige(i),bign(i)
       enddo
-      do i=1,11; write(*,'(63a)') title(i); enddo
+      do i=1,11; write(*,'(77a)') title(i); enddo
       ng=6; n=100; xmax=10.; xmin=-10.
       nion=-1; syslab=""; np=50; ngj=50;
       verbose=.false.; allbase=.true.; hartfck=.false.; animate=.false.
-      quiet=.false.; uout=6
+      quiet=.false.; uout=6; tol=1e-8
       allocate(comlin(command_argument_count()))
-      do i=1,command_argument_count()
-       call getarg(i,comlin(i))
-      enddo
+      do i=1,command_argument_count(); call getarg(i,comlin(i)); enddo
       do i=1,command_argument_count()
        if (index(comlin(i),'-ng').gt.0) then
         read(comlin(i+1),'(i10)') ng
@@ -39,6 +36,8 @@
         read(comlin(i+1),'(f10.5)') xmax
        elseif(index(comlin(i),'-xmin').gt.0) then
         read(comlin(i+1),'(f10.5)') xmin
+       elseif(index(comlin(i),'-tol').gt.0) then
+        read(comlin(i+1),'(f10.5)') tol
        elseif(index(comlin(i),'-lab').gt.0) then
         read(comlin(i+1),'(a)') syslab
        elseif(index(comlin(i),'-ani').gt.0) then
@@ -59,13 +58,18 @@
       if(ng.lt.2.or.ng.gt.6)stop'being a cock! unsupported basis'
       if(maxval(n).gt.1000)stop'being a cock! n is too big'
       if(animate.and.quiet) then
-       uout=65
+       uout=65; open(uout,file="output.aeden")
+       do i=1,7; 
+        write(title(i+2),1002)biga(i),bige(i),bigd(i),bige(i),bign(i)
+       enddo
        do i=1,11; write(uout,'(63a)') title(i); enddo
-       write(65,300)ng,xmin,xmax,n
+       write(uout,300)ng,xmin,xmax,n
        anitime=0.
       endif
       dx=(xmax-xmin)/n
       write(*,300)ng,xmin,xmax,n
+1001  format("#      \x1B[32m",5(a8,"  "),"\x1B[0m",t72,"#")
+1002  format("#      ",5(a8,"  "),t63,"#")
 200   format("#",t63,"#",/,"#",4x,"Usage:",t63,"#",/,"#",t63,"#",/,
      .       "#",4x,"./aeden.x -lab XXXX {options}",t63,"#",/,"#",t63,"#",/,
      .       "#",4x,"Essential Input",t63,"#",/,
@@ -196,7 +200,7 @@
       end subroutine energies
 !---------------------------------------------------------------------!
       function pops(c) result(pop)
-      use rundata, only: n0,n1,n2,nh,smat,hartfck
+      use rundata, only: ng,n0,n1,n2,nh,smat,hartfck
       implicit none
       integer::i
       double precision,dimension(2)::pop
