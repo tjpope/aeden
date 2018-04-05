@@ -215,21 +215,22 @@
       end function pops
 !---------------------------------------------------------------------!      
       subroutine finalenergy(T,V,Q,c)
-      use scf, only: coulomb,fullden,ionrep
+      use scf, only: coulomb,fullden,ionrep,totalrho
       use rundata, only: etot,ry2ev,n0,n1,n2,nh,ne,hartfck,animate,
-     .                                                        iani,uout
+     .                                                        iani,uout,smat,ng,allbase
       implicit none
-      double precision::EK,EN,EH,Eion,conv
+      double precision::EK,EN,EH,Eion,conv,popl,popr,popm,pops
       double precision,dimension(nh)::c
       double precision,dimension(n0,n0)::T,V,VH,RHO
       double precision,dimension(n0,n0,n0,n0)::Q
       double precision,dimension(nh,nh)::F,P
-      P=fullden(c); conv=ry2ev/ne
-      if(hartfck)then
-       RHO=P(1:n0,1:n0)
-      else
-       RHO=P(n1:n2,n1:n2)+P(1:n0,1:n0); 
-      endif
+      conv=ry2ev!/(ne)
+      P=fullden(c); RHO=totalrho(P)
+c      if(hartfck)then
+c       RHO=P(1:n0,1:n0)
+c      else
+c       RHO=P(n1:n2,n1:n2)+P(1:n0,1:n0); 
+c      endif
       F=0.d0; VH=coulomb(RHO,Q);
       if(hartfck)then
        F(1:n0,1:n0)=VH; EH=sum(P*F)*conv
@@ -240,13 +241,26 @@
        F(1:n0,1:n0)=T; F(n1:n2,n1:n2)=F(1:n0,1:n0); EK=sum(P*F)*conv
        F(1:n0,1:n0)=V; F(n1:n2,n1:n2)=F(1:n0,1:n0); EN=sum(P*F)*conv
       endif
+      if(hartfck) then
+       popl=0; popr=0; popm=0; pops=0
+      else
+       popm=sum(smat(1:n0,1:n0)*P(1:n0,1:n0))
+       pops=sum(smat(1:n0,1:n0)*P(n1:n2,n1:n2))
+       if(allbase) then
+        popl=sum(smat(1:ng,1:ng)*RHO(1:ng,1:ng))
+        popr=sum(smat(ng+1:2*ng,ng+1:2*ng)*RHO(ng+1:2*ng,ng+1:2*ng))
+       else
+        popl=sum(smat(1:ne,1:ne)*RHO(1:ne,1:ne))
+        popr=sum(smat(ne+1:2*ne,ne+1:2*ne)*RHO(ne+1:2*ne,ne+1:2*ne))
+       endif
+      endif
       Etot=Etot*ry2ev; Eion=ionrep()*ry2ev
       if(hartfck)then
        write(uout,100)EN,EK,EH,Eion,etot
       else
        write(uout,200)EN,EK,EH,etot-(EN+EH+EK+Eion),Eion,etot
       endif
-      if(animate) write(uout,300)iani,Etot,EK,EN,EH
+      if(animate) write(uout,300)iani,Etot,EK,EN,EH,popl,popr,popm,pops
 100   format("#",4x,"Nuclear Energy          = ",f20.5,t63,"#",/,
      .       "#",4x,"Kinetic Energy          = ",f20.5,t63,"#",/,
      .       "#",4x,"Coulomb+Exchange Energy = ",f20.5,t63,"#",/,
@@ -258,7 +272,7 @@
      .       "#",4x,"Bivector Term  = ",f20.5,t63,"#",/,
      .       "#",4x,"Ion Repulsion  = ",f20.5,t63,"#",/,"#",t63,"#",/,
      .       "#",4x,"Total Energy   = ",f20.5,t63,"#",/,"#",t63,"#")
-300   format(t2,i5,t8,4(es17.10,1x),/,"#",t63,"#")
+300   format(t2,i5,t8,8(es17.10,1x),/,"#",t63,"#")
       end subroutine finalenergy
 !---------------------------------------------------------------------!  
       subroutine output(fname,n1,n2,n3,dat,g)

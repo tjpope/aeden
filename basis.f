@@ -8,8 +8,8 @@
       implicit none
       type(maxbase) b
       integer::i,j,k
-      double precision::con
-      con=(2/pi)**(3./4.)
+c      double precision::con
+c      con=(2/pi)**(3./4.)
       k=0
       do i=1,nion
         do j=1,nint(zion(i))
@@ -52,7 +52,7 @@
       else
        allocate(cfix(nb,n0)); cfix=0.d0
        do i=1,ne; j=(i-1)*ng; k=j+ng; j=j+1
-        cfix(j:k,i)=sto%d(j:k)*rrt2/sqrt(dble(ne))
+        cfix(j:k,i)=sto%d(j:k)!*rrt2!/sqrt(dble(ne))
        enddo
        c=1.e-10; c(1)=1.; if(.not.hartfck)c(n1)=-1.
       endif
@@ -74,8 +74,8 @@
       integer::no,ng,na
       if(no.eq.1) then
        if(ng.eq.2) then
-        sto%a(1)=.151623;  sto%d(1)=.851819;
-        sto%a(2)=.678914;  sto%d(2)=.430129;
+        sto%a(1)=.151623;  sto%d(1)=.678914;
+        sto%a(2)=.851819;  sto%d(2)=.430129;
        elseif(ng.eq.3) then
         sto%a(1)=.109818;  sto%d(1)=.444635;
         sto%a(2)=.405771;  sto%d(2)=.535328;
@@ -385,6 +385,7 @@
       double precision,dimension(ngj)::pl
       call cpu_time(cputime(3))
       call gauss_jacobi(-.5d0,-.5d0)
+      nmat=0.d0
       if(allbase) then
        do i=1,nb
         g1%expo=sto%a(i)
@@ -550,7 +551,7 @@
           enddo
          enddo
         enddo
-       enddo
+       enddo 
       endif
       end subroutine qmatrix
 !---------------------------------------------------------------------!

@@ -83,10 +83,8 @@
       use rundata       !global variables
       use io            !input/output routines
       use basis         !basis set routines
-      use renew_basis   !basis renewal routines
       use scf           !scf routines
       implicit none
-      double precision::steps,cutoff,cut
       call moses        !get input from command line
       call input        !get input from files
       call allocations  !allocate arrays
@@ -95,31 +93,13 @@
       call smatrix      !calculate overlap matrix
 c      call output("smat.dat",n0,n0,1,smat)
       call kmatrix      !calculate kinetic matrix
+c      call output("kmat.dat",n0,n0,1,kmat)
       call nmatrix      !calculate nuclear matrix
+c      call output("nmat.dat",n0,n0,1,nmat)
       call qmatrix      !calculate coulomb matrix
       call kohnsham     !perform scf cycle
       call energies     !calculate and output energies
-      if(animate) then
-       cutoff=nani/63.0; steps=2; cut=cutoff
-       do iani=2,nani
-        if(uout.ne.6) then
-         steps=steps+1; if(steps.ge.cut) then
-          call system("echo -n '#'"); cut=cut+cutoff
-         endif
-        endif
-        call renew_smatrix !calculate overlap matrix again
-        call renew_kmatrix !calculate kinetic matrix again
-        call renew_nmatrix !calculate nuclear matrix again
-        call qmatrix       !calculate coulomb matrix again
-        call kohnsham      !perform scf cycle
-        call energies      !calculate and output energies
-       enddo
-       if(uout.ne.6)then
-        close(65); write(*,200); write(*,300)anitime
-       else
-        write(*,300)anitime
-       endif
-      endif
+      if(animate) call interate !interate if requested
       call output("coef.dat",nh,1,1,c)
       if(verbose)then   !generate mass and spin densities on grid
        if(hartfck)then 
@@ -131,6 +111,42 @@ c      call output("smat.dat",n0,n0,1,smat)
       endif
 100   format("#",t63,"#",/,"#",t6,"Running on ",i0," Geometries",
      .       t63,"#",/,"#",t63,"#")
+      end program aeden
+!---------------------------------------------------------------------!
+      subroutine interate
+      use rundata       !global variables
+      use io            !input/output routines
+      use basis         !basis set routines
+      use renew_basis   !basis renewal routines
+      use scf           !scf routines
+      implicit none
+      double precision::steps,cutoff,cut
+      cutoff=nani/63.0; steps=2; cut=cutoff
+      do iani=2,nani
+       if(uout.ne.6) then
+        steps=steps+1; if(steps.ge.cut) then
+         call system("echo -n '#'"); cut=cut+cutoff
+        endif
+       endif
+c       call renew_smatrix !calculate overlap matrix again
+c       call renew_kmatrix !calculate kinetic matrix again
+c       call renew_nmatrix !calculate nuclear matrix again
+       call smatrix !calculate overlap matrix again
+c      call output("smat.dat",n0,n0,1,smat)
+       call kmatrix !calculate kinetic matrix again
+c      call output("kmat.dat",n0,n0,1,kmat)
+       call nmatrix !calculate nuclear matrix again
+c      call output("nmat.dat",n0,n0,1,nmat)
+       call qmatrix       !calculate coulomb matrix again
+       call kohnsham      !perform scf cycle
+       call energies      !calculate and output energies
+c       stop
+      enddo
+      if(uout.ne.6)then
+       close(65); write(*,200); write(*,300)anitime
+      else
+       write(*,300)anitime
+      endif
 200   format(/,"#",t63,"#",/,"#",t6,
      .       "The rest of the ouput is in output.aeden",t63,"#",/,
      .       "#",t63,"#")
@@ -142,13 +158,5 @@ c      call output("smat.dat",n0,n0,1,smat)
      .  "#",t6,"Coulomb Matrix: ",t26,f10.3,t36," seconds",t63,"#",/,
      .  "#",t6,"SCF: ",t26,f10.3,t36," seconds",t63,"#",/,
      .  "#"t63,"#",/,63("#"))
+      end subroutine interate
 !---------------------------------------------------------------------!
-      end program aeden
-!---------------------------------------------------------------------!
-
-
-
-
-
-
-
